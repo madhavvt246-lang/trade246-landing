@@ -1,143 +1,191 @@
 /**
- * Trade246 Platform Logic
- * Handles calculator math, validation, and dynamic WhatsApp redirection
+ * Trade246 Interactive Platform Script
  */
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Mobile Nav Toggle
+  // Mobile Menu Toggle
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenu = document.getElementById("mobileMenu");
-
   if (mobileMenuBtn && mobileMenu) {
-    mobileMenuBtn.addEventListener("click", () => {
-      mobileMenu.classList.toggle("hidden");
-    });
+    mobileMenuBtn.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
   }
 
-  // Calculator DOM Elements
+  // --- LEVERAGE DATA MATRIX ---
+  const leverageMatrix = {
+    nse_bse_mcx: { intraday: [10, 50, 100, 500], overnight: [5, 10, 25, 50], tradIntraday: "5x", tradOvernight: "1x" },
+    option:      { intraday: [2, 5, 8, 10],      overnight: [1, 2],         tradIntraday: "3x-4x", tradOvernight: "3x-4x" },
+    eq:          { intraday: [2, 5, 10, 20],     overnight: [2, 5, 10],     tradIntraday: "5x", tradOvernight: "1x" },
+    forex:       { intraday: [10, 25, 50, 100],   overnight: [10, 25, 50, 100], tradIntraday: "1x", tradOvernight: "1x" },
+    crypto:      { intraday: [20, 50, 100, 200],  overnight: [20, 50, 100, 200], tradIntraday: "1x", tradOvernight: "1x" },
+    us_equities: { intraday: [10, 25, 50, 100],   overnight: [10, 25, 50, 100], tradIntraday: "1x", tradOvernight: "1x" }
+  };
+
+  // State
+  let currentHoldingType = "intraday";
+  let selectedLeverage = 500;
+  let userLeadData = { name: "", phone: "" };
+
+  // DOM Elements
+  const leadGateContainer = document.getElementById("leadGateContainer");
+  const leadForm = document.getElementById("leadForm");
+  const leadName = document.getElementById("leadName");
+  const leadPhone = document.getElementById("leadPhone");
+  const phoneValidationMsg = document.getElementById("phoneValidationMsg");
+  const calculatorContent = document.getElementById("calculatorContent");
+
   const assetSelect = document.getElementById("assetSelect");
+  const btnIntraday = document.getElementById("btnIntraday");
+  const btnOvernight = document.getElementById("btnOvernight");
+  const leverageContainer = document.getElementById("leverageContainer");
+  const maxLeverageBadge = document.getElementById("maxLeverageBadge");
+
   const investmentInput = document.getElementById("investmentInput");
   const investmentSlider = document.getElementById("investmentSlider");
-  const leverageBtns = document.querySelectorAll(".leverage-btn");
-  
-  const exposureVal = document.getElementById("exposureVal");
-  const potentialProfitVal = document.getElementById("potentialProfitVal");
-  const tradCost = document.getElementById("tradCost");
-  const totalSavingsDisplay = document.getElementById("totalSavingsDisplay");
-  const monthlySavings = document.getElementById("monthlySavings");
-  const amountValidationMsg = document.getElementById("amountValidationMsg");
-  const whatsappRedirectBtn = document.getElementById("whatsappRedirectBtn");
 
-  // State Variables
-  let selectedLeverage = 5; // Default 5x leverage
+  const tradLeverageVal = document.getElementById("tradLeverageVal");
+  const t246LeverageVal = document.getElementById("t246LeverageVal");
+  const tradExposureVal = document.getElementById("tradExposureVal");
+  const t246ExposureVal = document.getElementById("t246ExposureVal");
+  const tradBrokerageVal = document.getElementById("tradBrokerageVal");
 
-  // Sync Input and Slider
-  investmentInput.addEventListener("input", (e) => {
-    let val = parseFloat(e.target.value) || 0;
-    
-    // Anti-spam & quality validation check
-    if (val < 1000) {
-      amountValidationMsg.classList.remove("hidden");
-    } else {
-      amountValidationMsg.classList.add("hidden");
-    }
+  // --- 1. LEAD CAPTURE FORM SUBMISSION ---
+  if (leadForm) {
+    leadForm.addEventListener("submit", (e) => {
+      e.preventDefault();
 
-    investmentSlider.value = val;
-    calculateSavings();
-  });
+      const name = leadName.value.trim();
+      const phone = leadPhone.value.trim();
+      const indianPhoneRegex = /^[6-9]\d{9}$/;
 
-  investmentSlider.addEventListener("input", (e) => {
-    investmentInput.value = e.target.value;
-    amountValidationMsg.classList.add("hidden");
-    calculateSavings();
-  });
-
-  // Handle Leverage Selection
-  leverageBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      leverageBtns.forEach((b) => {
-        b.classList.remove("active", "border-2", "border-brandGreen", "bg-emerald-50", "text-brandGreen");
-        b.classList.add("border-gray-200", "text-gray-700");
-      });
-
-      btn.classList.add("active", "border-2", "border-brandGreen", "bg-emerald-50", "text-brandGreen");
-      btn.classList.remove("border-gray-200", "text-gray-700");
-
-      selectedLeverage = parseFloat(btn.getAttribute("data-leverage")) || 1;
-      calculateSavings();
-    });
-  });
-
-  assetSelect.addEventListener("change", calculateSavings);
-
-  // Calculator Core Logic
-  function calculateSavings() {
-    let investment = parseFloat(investmentInput.value) || 0;
-
-    // Strict minimum boundary
-    if (investment < 1000) {
-      investment = 1000;
-    }
-
-    const totalExposure = investment * selectedLeverage;
-    const baselineProfit = totalExposure * 0.10; // 10% market swing
-
-    // Traditional Broker Fee Calculation Logic
-    const assetCategory = assetSelect.value;
-    let traditionalFee = 0;
-
-    if (assetCategory === "equity_intraday" || assetCategory === "equity_futures") {
-      // 0.03% capped at ₹20 per order
-      const calculatedPercentage = totalExposure * 0.0003;
-      traditionalFee = Math.min(calculatedPercentage, 20);
-      // Ensure flat ₹20 if leveraged turnover is high
-      if (traditionalFee < 20 && totalExposure >= 66667) {
-        traditionalFee = 20;
+      if (!indianPhoneRegex.test(phone)) {
+        phoneValidationMsg.classList.remove("hidden");
+        return;
       }
-    } else {
-      // Flat ₹20 per order for Options, Commodities, Currency
-      traditionalFee = 20.00;
-    }
+      phoneValidationMsg.classList.add("hidden");
 
-    const trade246Fee = 0.00;
-    const totalSaved = traditionalFee - trade246Fee;
-    const estimatedMonthlySaved = totalSaved * 50; // 50 trades per month estimate
+      userLeadData = { name, phone };
 
-    // Format Currency Numbers to INR
-    const formatINR = (num) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(num);
+      // Push Lead to Google Sheets Web App (Replace URL when deployed)
+      const googleSheetScriptURL = "https://script.google.com/macros/s/AKfycbzM0HhybnJ12-PR3hOWIc48kHiASv2Ry58XmG4wXFnNOqZZ8u3LazP8TYKxJDLQ5ZmC/exec";
+      if (googleSheetScriptURL && googleSheetScriptURL.startsWith("http")) {
+        fetch(googleSheetScriptURL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name, phone: phone, timestamp: new Date().toISOString() })
+        }).catch(err => console.error("Sheet Sync Error", err));
+      }
 
-    // Update UI Elements
-    exposureVal.innerText = formatINR(totalExposure);
-    potentialProfitVal.innerText = formatINR(baselineProfit);
-    tradCost.innerText = formatINR(traditionalFee);
-    totalSavingsDisplay.innerText = formatINR(totalSaved);
-    monthlySavings.innerText = formatINR(estimatedMonthlySaved);
+      // Hide Gate and Reveal Calculator
+      leadGateContainer.classList.add("hidden");
+      calculatorContent.classList.remove("hidden");
+
+      // Initialize Calculator Controls
+      updateLeverageOptions();
+      calculateComparison();
+    });
   }
 
-  // Initial Calculation Run
-  calculateSavings();
+  // --- 2. DYNAMIC LEVERAGE SELECTOR ---
+  function updateLeverageOptions() {
+    const selectedAsset = assetSelect.value;
+    const assetData = leverageMatrix[selectedAsset] || leverageMatrix.nse_bse_mcx;
+    const options = assetData[currentHoldingType] || [1];
 
-  // WhatsApp Pre-filled Redirect Scripting
-  whatsappRedirectBtn.addEventListener("click", () => {
-    let investment = parseFloat(investmentInput.value) || 0;
+    leverageContainer.innerHTML = "";
+    selectedLeverage = options[options.length - 1]; // Default to highest leverage option
+    maxLeverageBadge.innerText = `Max: ${selectedLeverage}x`;
 
-    if (investment < 1000) {
-      alert("Please enter a valid investment capital (Minimum ₹1,000).");
-      return;
+    options.forEach((lev) => {
+      const btn = document.createElement("button");
+      btn.innerText = `${lev}x`;
+      btn.className = `py-2.5 rounded-xl border font-bold text-sm transition-all ${
+        lev === selectedLeverage
+          ? "border-2 border-brandGreen bg-emerald-50 text-brandGreen"
+          : "border-gray-200 text-gray-700 hover:border-brandGreen"
+      }`;
+
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#leverageContainer button").forEach((b) => {
+          b.className = "py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:border-brandGreen font-bold text-sm";
+        });
+        btn.className = "py-2.5 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
+        selectedLeverage = lev;
+        calculateComparison();
+      });
+
+      leverageContainer.appendChild(btn);
+    });
+  }
+
+  // --- 3. EVENT LISTENERS FOR CALCULATOR ---
+  if (assetSelect) {
+    assetSelect.addEventListener("change", () => {
+      updateLeverageOptions();
+      calculateComparison();
+    });
+  }
+
+  if (btnIntraday && btnOvernight) {
+    btnIntraday.addEventListener("click", () => {
+      currentHoldingType = "intraday";
+      btnIntraday.className = "holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
+      btnOvernight.className = "holding-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
+      updateLeverageOptions();
+      calculateComparison();
+    });
+
+    btnOvernight.addEventListener("click", () => {
+      currentHoldingType = "overnight";
+      btnOvernight.className = "holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
+      btnIntraday.className = "holding-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
+      updateLeverageOptions();
+      calculateComparison();
+    });
+  }
+
+  if (investmentInput && investmentSlider) {
+    investmentInput.addEventListener("input", (e) => {
+      investmentSlider.value = e.target.value;
+      calculateComparison();
+    });
+    investmentSlider.addEventListener("input", (e) => {
+      investmentInput.value = e.target.value;
+      calculateComparison();
+    });
+  }
+
+  // --- 4. MATH COMPARISON ENGINE ---
+  function calculateComparison() {
+    const capital = parseFloat(investmentInput.value) || 1000;
+    const selectedAsset = assetSelect.value;
+    const assetData = leverageMatrix[selectedAsset];
+
+    const tradLeverageText = currentHoldingType === "intraday" ? assetData.tradIntraday : assetData.tradOvernight;
+    
+    // Convert trad leverage text to multiplier for calculation
+    let tradMultiplier = 1;
+    if (tradLeverageText.includes("5x")) tradMultiplier = 5;
+    else if (tradLeverageText.includes("4x")) tradMultiplier = 4;
+    else if (tradLeverageText.includes("3x")) tradMultiplier = 3;
+
+    const tradExposure = capital * tradMultiplier;
+    const t246Exposure = capital * selectedLeverage;
+
+    // Brokerage comparison
+    let tradFee = 20;
+    if (selectedAsset === "eq" && currentHoldingType === "intraday") {
+      tradFee = Math.min(tradExposure * 0.0003, 20);
     }
 
-    const assetName = assetSelect.options[assetSelect.selectedIndex].text;
-    const leverageText = `${selectedLeverage}x`;
-    const formattedAmount = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(investment);
+    const formatINR = (num) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(num);
 
-    // Personalized WhatsApp script
-    const message = `Hi Trade246 team, I am planning to trade in ${assetName} with an investment of ${formattedAmount} and ${leverageText} leverage. I see I can save on traditional brokerage fees. Please help me set up my account!`;
+    tradLeverageVal.innerText = tradLeverageText;
+    t246LeverageVal.innerText = `${selectedLeverage}x`;
 
-    // Encode for URL query string
-    const encodedMessage = encodeURIComponent(message);
-    const phoneNumber = "919876543210"; // Replace with your company WhatsApp number
+    tradExposureVal.innerText = formatINR(tradExposure);
+    t246ExposureVal.innerText = formatINR(t246Exposure);
 
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, "_blank");
-  });
+    tradBrokerageVal.innerText = `₹${tradFee.toFixed(0)} - ₹150`;
+  }
 });
