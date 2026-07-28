@@ -1,0 +1,41 @@
+/* Custom Styles for Trade246 Landing Page */
+
+@layer utilities {
+  /* Smooth transitions for all dynamic elements */
+  .transition-all-200 {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Custom styling for range input slider */
+input[type=range] {
+  -webkit-appearance: none;
+  background: #e5e7eb;
+  height: 8px;
+  border-radius: 9999px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 22px;
+  width: 22px;
+  border-radius: 50%;
+  background: #0C442F;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(12, 68, 47, 0.3);
+  transition: transform 0.15s ease;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* Hide arrow controls on number inputs for clean UI */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
