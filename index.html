@@ -526,10 +526,14 @@
   <!-- Footer -->
   <footer class="bg-gray-950 text-gray-400 border-t border-gray-900 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-brandGreen text-white flex items-center justify-center font-bold text-base">T</div>
-        <span class="font-heading font-bold text-xl text-white">TRADE246</span>
-      </div>
+      <!-- UPDATED FOOTER BRANDING (LOGO ONLY) -->
+<a href="#" class="flex items-center">
+  <img src="logo.png" alt="TRADE246 Logo" class="h-8 w-auto object-contain" id="footerLogoImg" onerror="this.classList.add('hidden'); document.getElementById('footerLogoFallback').classList.remove('hidden');" />
+  
+  <div id="footerLogoFallback" class="hidden w-8 h-8 rounded-lg bg-brandGreen text-white flex items-center justify-center font-bold text-base">
+    T
+  </div>
+</a>
       <div class="text-xs text-gray-500">
         High Leverage Multi-Asset Trading Platform
       </div>
