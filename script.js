@@ -1,5 +1,5 @@
 /**
- * Trade246 Calculation Logic Engine
+ * TRADE246 Calculation & Lead Recording Engine
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -68,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const leadName = document.getElementById("leadName");
   const leadPhone = document.getElementById("leadPhone");
   const phoneValidationMsg = document.getElementById("phoneValidationMsg");
+  const leadSubmitBtn = document.getElementById("leadSubmitBtn");
   const calculatorContent = document.getElementById("calculatorContent");
 
   const assetSelect = document.getElementById("assetSelect");
@@ -89,17 +90,53 @@ document.addEventListener("DOMContentLoaded", () => {
   const tradExposureVal = document.getElementById("tradExposureVal");
   const t246ExposureVal = document.getElementById("t246ExposureVal");
   const tableProfitPct = document.getElementById("tableProfitPct");
+  
+  const tradGrossProfitVal = document.getElementById("tradGrossProfitVal");
+  const t246GrossProfitVal = document.getElementById("t246GrossProfitVal");
+  
   const tradProfitVal = document.getElementById("tradProfitVal");
   const t246ProfitVal = document.getElementById("t246ProfitVal");
+  
   const tradNetWorthVal = document.getElementById("tradNetWorthVal");
   const t246NetWorthVal = document.getElementById("t246NetWorthVal");
   const dynamicAdvantageBanner = document.getElementById("dynamicAdvantageBanner");
 
-  // --- 1. LEAD GATEWAY FORM SUBMISSION ---
+  // --- 1. RELIABLE LEAD RECORDING SYSTEM ---
+  function recordLeadData(name, phone) {
+    const leadPayload = {
+      name: name,
+      phone: phone,
+      timestamp: new Date().toISOString(),
+      source: "TRADE246 Calculator Gateway"
+    };
+
+    // Backup 1: Save to Browser LocalStorage
+    try {
+      const existingLeads = JSON.parse(localStorage.getItem("trade246_leads") || "[]");
+      existingLeads.push(leadPayload);
+      localStorage.setItem("trade246_leads", JSON.stringify(existingLeads));
+    } catch (e) {
+      console.warn("LocalStorage save error:", e);
+    }
+
+    // Backup 2: Post to Webhook/Sheet endpoint if configured
+    const WEBHOOK_URL = "https://script.google.com/macros/s/YOUR_APPS_SCRIPT_ID/exec"; 
+    
+    if (WEBHOOK_URL && !WEBHOOK_URL.includes("YOUR_APPS_SCRIPT_ID")) {
+      fetch(WEBHOOK_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(leadPayload)
+      }).catch(err => console.error("Sheet Sync Error:", err));
+    }
+  }
+
   if (leadForm) {
     leadForm.addEventListener("submit", (e) => {
       e.preventDefault();
 
+      const name = leadName.value.trim();
       const phone = leadPhone.value.trim();
       const phoneRegex = /^[6-9]\d{9}$/;
 
@@ -109,9 +146,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       phoneValidationMsg.classList.add("hidden");
 
-      leadGateContainer.classList.add("hidden");
-      calculatorContent.classList.remove("hidden");
-      runCalculation();
+      // Indicate progress
+      leadSubmitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Unlocking...`;
+      
+      // Save data
+      recordLeadData(name, phone);
+
+      setTimeout(() => {
+        leadGateContainer.classList.add("hidden");
+        calculatorContent.classList.remove("hidden");
+        runCalculation();
+      }, 400);
     });
   }
 
@@ -159,8 +204,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     btnHolding.addEventListener("click", () => {
       currentHoldingType = "holding";
-      btnHolding.className = "holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
+      btnHolding.className = "holding-btn active py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
       btnIntraday.className = "holding-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
+      btnHolding.className = "holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
       runCalculation();
     });
   }
@@ -190,17 +236,22 @@ document.addEventListener("DOMContentLoaded", () => {
     profitPctDisplay.innerText = `${profitMovePct}%`;
     tableProfitPct.innerText = `${profitMovePct}%`;
 
-    // Calculate Exposures
+    // Exposures
     const tradExposure = capital * tradLev;
     const t246Exposure = capital * t246Lev;
 
-    // Calculate Profits
-    const tradProfit = tradExposure * (profitMovePct / 100);
-    const t246Profit = t246Exposure * (profitMovePct / 100);
+    // Gross Profits
+    const tradGrossProfit = tradExposure * (profitMovePct / 100);
+    const t246GrossProfit = t246Exposure * (profitMovePct / 100);
 
-    // Calculate Net Worth
-    const tradNetWorth = capital + tradProfit;
-    const t246NetWorth = capital + t246Profit;
+    // Taxation & Fees (Avg ~12% tax deduction on traditional vs 0% on TRADE246)
+    const tradTaxRate = 0.12; 
+    const tradNetProfit = Math.max(0, tradGrossProfit * (1 - tradTaxRate) - 30);
+    const t246NetProfit = t246GrossProfit; // 0 tax & 0 brokerage
+
+    // Account Totals
+    const tradNetWorth = capital + tradNetProfit;
+    const t246NetWorth = capital + t246NetProfit;
 
     // INR Formatter
     const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
@@ -208,13 +259,16 @@ document.addEventListener("DOMContentLoaded", () => {
     tradExposureVal.innerText = formatINR(tradExposure);
     t246ExposureVal.innerText = formatINR(t246Exposure);
 
-    tradProfitVal.innerText = formatINR(tradProfit);
-    t246ProfitVal.innerText = formatINR(t246Profit);
+    tradGrossProfitVal.innerText = formatINR(tradGrossProfit);
+    t246GrossProfitVal.innerText = formatINR(t246GrossProfit);
+
+    tradProfitVal.innerText = formatINR(tradNetProfit);
+    t246ProfitVal.innerText = formatINR(t246NetProfit);
 
     tradNetWorthVal.innerText = formatINR(tradNetWorth);
     t246NetWorthVal.innerText = formatINR(t246NetWorth);
 
     // Dynamic Banner Advantage Text
-    dynamicAdvantageBanner.innerText = `Net advantage with Trade246 : ${t246Lev}x more exposure`;
+    dynamicAdvantageBanner.innerText = `Net advantage with TRADE246 : ${t246Lev}x more exposure`;
   }
 });
