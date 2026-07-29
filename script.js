@@ -1,23 +1,30 @@
 /**
  * TRADE246 Master Script
- * Handles Logo Fallbacks, Lead Capture to Google Sheets, and Calculator Engine
+ * Fixes: Top-of-page scroll force, dynamic brokerage calculation for small trades,
+ * logo fallbacks, and Google Sheets lead capture.
  */
 
+// 1. FORCE PAGE TO LOAD AT THE TOP (Prevents auto-scrolling to bottom)
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
+
 document.addEventListener("DOMContentLoaded", () => {
-  // --- 1. LOGO FALLBACK HANDLING (HEADER & FOOTER) ---
-  // Ensure broken image icons never appear if logo.png is missing or fails to load
+  // Guarantee scroll top on DOM ready
+  window.scrollTo(0, 0);
+
+  // --- 2. LOGO FALLBACK HANDLING (HEADER & FOOTER) ---
   function setupLogoFallback(imgId, fallbackId) {
     const img = document.getElementById(imgId);
     const fallback = document.getElementById(fallbackId);
 
     if (img) {
-      // If image fails to load, hide image and show fallback emblem
       img.onerror = () => {
         img.classList.add("hidden");
         if (fallback) fallback.classList.remove("hidden");
       };
 
-      // Check if image is already broken on page load
       if (img.complete && img.naturalWidth === 0) {
         img.classList.add("hidden");
         if (fallback) fallback.classList.remove("hidden");
@@ -35,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileMenuBtn.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
   }
 
-  // --- 2. LEVERAGE & TRADITIONAL BROKER MATRIX ---
+  // --- 3. LEVERAGE & TRADITIONAL BROKER MATRIX ---
   const rulesMatrix = {
     nse_futures: {
       intraday: { t246Lev: 500, tradLev: 5, label: "500x (0.20% Margin)" },
@@ -129,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Web App Endpoint for Google Apps Script Sheet backend
   const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzM0HhybnJ12-PR3hOWIc48kHiASv2Ry58XmG4wXFnNOqZZ8u3LazP8TYKxJDLQ5ZmC/exec";
 
-  // --- 3. GOOGLE SHEET LEAD SUBMISSION ---
+  // --- 4. GOOGLE SHEET LEAD SUBMISSION ---
   async function submitLeadToBackend(name, phone) {
     const payload = {
       name: name,
@@ -138,7 +145,6 @@ document.addEventListener("DOMContentLoaded", () => {
       source: "TRADE246 Calculator"
     };
 
-    // Backup lead locally
     try {
       const existing = JSON.parse(localStorage.getItem("t246_leads") || "[]");
       existing.push(payload);
@@ -147,7 +153,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("LocalStorage backup error:", e);
     }
 
-    // Submit payload to Google Apps Script Web App
     try {
       await fetch(GOOGLE_SHEET_WEB_APP_URL, {
         method: "POST",
@@ -156,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify(payload)
       });
     } catch (err) {
-      console.error("JSON fetch failed, trying URLSearchParams fallback:", err);
+      console.error("JSON fetch failed, trying fallback:", err);
       try {
         const formData = new URLSearchParams();
         formData.append("name", name);
@@ -191,10 +196,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       leadSubmitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Unlocking Calculator...`;
 
-      // Trigger Lead Submission
       await submitLeadToBackend(name, phone);
 
-      // Reveal Calculator UI
       setTimeout(() => {
         leadGateContainer.classList.add("hidden");
         calculatorContent.classList.remove("hidden");
@@ -203,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- 4. CALCULATOR INTERFACE CONTROLS ---
+  // --- 5. CALCULATOR INTERFACE CONTROLS ---
   function updateControlVisibility() {
     const selectedAsset = assetSelect.value;
     
@@ -249,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     btnHolding.addEventListener("click", () => {
       currentHoldingType = "holding";
-      btnIntraday.className = "holding-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
+      btnIntraday.className = "holding-btn active py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
       btnHolding.className = "holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
       runCalculation();
     });
@@ -258,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (investmentSlider) investmentSlider.addEventListener("input", runCalculation);
   if (profitSlider) profitSlider.addEventListener("input", runCalculation);
 
-  // --- 5. CALCULATION ENGINE LOGIC ---
+  // --- 6. REALISTIC CALCULATION ENGINE LOGIC ---
   function runCalculation() {
     if (!investmentSlider || !profitSlider || !assetSelect) return;
 
@@ -286,28 +289,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const tradExposure = capital * tradLev;
     const t246Exposure = capital * t246Lev;
 
-    // Gross Profits
+    // Gross Profits before charges
     const tradGrossProfit = tradExposure * (profitMovePct / 100);
     const t246GrossProfit = t246Exposure * (profitMovePct / 100);
 
-    // Taxation & Charges (Avg 12% tax deduction on traditional vs 0% on TRADE246)
-    // --- ACCURATE BROKERAGE & TAXATION CALCULATION ---
-    const totalTurnover = tradExposure * 2; // Round-trip (Buy + Sell exposure)
+    // --- ACCURATE TRADITIONAL BROKER FEE MODEL ---
+    // Total turnover (Buy + Sell legs)
+    const roundTripTurnover = tradExposure * 2; 
 
-    // Standard discount broker rule: Min(₹20, 0.03% of turnover) per leg
-    const brokeragePerLeg = Math.min(20, totalTurnover * 0.0003);
-    const totalBrokerage = brokeragePerLeg * 2; // Buy + Sell
+    // Brokerage: Min(₹20, 0.03% of turnover) per leg
+    const brokeragePerLeg = Math.min(20, roundTripTurnover * 0.0003);
+    const totalBrokerage = brokeragePerLeg * 2; 
 
-    // Statutory Taxes (STT, GST, Stamp Duty, SEBI turnover charges ≈ 0.02% of turnover)
-    const totalStatutoryTaxes = totalTurnover * 0.0002;
+    // Statutory Taxes (STT, GST, Stamp Duty, Exchange Charges ≈ 0.02% total turnover)
+    const statutoryTaxes = roundTripTurnover * 0.0002;
 
-    // Total Friction on Traditional Broker
-    const totalTradFriction = totalBrokerage + totalStatutoryTaxes;
+    const totalTradFriction = totalBrokerage + statutoryTaxes;
 
-    // Net Profit after deducting brokerage and taxes
+    // Net Profits
     const tradNetProfit = Math.max(0, tradGrossProfit - totalTradFriction);
-    const t246NetProfit = t246GrossProfit; // ₹0 Brokerage & ₹0 Tax on TRADE246
-    const t246NetProfit = t246GrossProfit; // 0 tax & 0 brokerage
+    const t246NetProfit = t246GrossProfit; // ₹0 Brokerage & ₹0 Taxes on TRADE246
 
     // Account Totals
     const tradNetWorth = capital + tradNetProfit;
@@ -323,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (t246GrossProfitVal) t246GrossProfitVal.innerText = formatINR(t246GrossProfit);
 
     if (tradProfitVal) tradProfitVal.innerText = formatINR(tradNetProfit);
-    if (t246ProfitVal) t246ProfitVal.innerText = formatINR(t246NetProfit);
+    if (t246ProfitVal) t246ProfitVal.innerText = formatINR(t246ProfitVal ? t246NetProfit : 0);
 
     if (tradNetWorthVal) tradNetWorthVal.innerText = formatINR(tradNetWorth);
     if (t246NetWorthVal) t246NetWorthVal.innerText = formatINR(t246NetWorth);
@@ -333,3 +334,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
+
+// Ensure top position after full window load
+window.onload = () => {
+  window.scrollTo(0, 0);
+};
