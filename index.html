@@ -44,16 +44,13 @@
   <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       
-      <!-- Logo Container -->
-      <a href="#" class="flex items-center gap-3 group">
-        <img src="logo.png" alt="TRADE246 Logo" class="h-10 w-auto object-contain" id="brandLogoImg" onerror="this.classList.add('hidden'); document.getElementById('brandLogoFallback').classList.remove('hidden');" />
+      <!-- Logo Container (Text removed, image/graphic only) -->
+      <a href="#" class="flex items-center group">
+        <img src="logo.png" alt="TRADE246" class="h-10 w-auto object-contain" id="brandLogoImg" onerror="this.classList.add('hidden'); document.getElementById('brandLogoFallback').classList.remove('hidden');" />
         
         <div id="brandLogoFallback" class="hidden w-10 h-10 rounded-xl bg-brandGreen text-white flex items-center justify-center font-heading font-extrabold text-xl shadow-md">
           T
         </div>
-        <span class="font-heading font-extrabold text-2xl tracking-tight text-gray-900">
-          TRADE<span class="text-brandGreen">246</span>
-        </span>
       </a>
 
       <!-- Navigation -->
@@ -113,13 +110,13 @@
         <form id="leadForm" class="space-y-4">
           <div>
             <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Your Full Name</label>
-            <input type="text" id="leadName" placeholder="e.g. Rahul Sharma" required 
+            <input type="text" id="leadName" name="name" placeholder="e.g. Rahul Sharma" required 
                    class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brandGreen focus:outline-none" />
           </div>
 
           <div>
             <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Mobile Number (WhatsApp)</label>
-            <input type="tel" id="leadPhone" placeholder="10-digit mobile number" required maxlength="10"
+            <input type="tel" id="leadPhone" name="phone" placeholder="10-digit mobile number" required maxlength="10"
                    class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brandGreen focus:outline-none" />
             <span id="phoneValidationMsg" class="text-xs text-brandRed hidden mt-1 block">Please enter a valid 10-digit Indian mobile number.</span>
           </div>
@@ -177,7 +174,7 @@
             </div>
           </div>
 
-          <!-- Platform Advantage Display Indicator (Removed 'Fixed') -->
+          <!-- Platform Advantage Display Indicator -->
           <div class="p-4 rounded-xl bg-gray-50 border border-gray-200 flex justify-between items-center">
             <div>
               <p class="text-xs text-gray-500 font-semibold uppercase">Platform Advantage</p>
@@ -275,7 +272,7 @@
             </div>
           </div>
 
-          <!-- WhatsApp Chat Button (Updated Text) -->
+          <!-- WhatsApp Chat Button -->
           <a id="whatsappChatBtn" target="_blank" 
              href="https://api.whatsapp.com/send?phone=+919027237174&text=Hello!%20I%20would%20like%20to%20connect%20with%20my%20Relationship%20Manager%20to%20know%20more."
              class="w-full py-4 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg transition-all flex items-center justify-center gap-3 text-base text-center">
@@ -437,54 +434,96 @@
     </div>
   </section>
 
-  <!-- 4. REVISED NEGATIVE BALANCE PROTECTION SECTION -->
-  <section id="nbp" class="py-20 bg-white">
+  <!-- 4. REWORKED NEGATIVE BALANCE PROTECTION SECTION -->
+  <section id="nbp" class="py-20 bg-white border-t border-gray-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-brandGreen font-semibold text-xs uppercase tracking-wider">
-          <i class="fa-solid fa-shield-halved"></i> Institutional Risk Guarantee
+          <i class="fa-solid fa-shield-halved"></i> Automated Protection Engine
         </div>
         <h2 class="font-heading font-extrabold text-3xl sm:text-4xl text-gray-900">
-          Complete Protection Against Overnight Gaps & Losses
+          70% Negative Balance Protection
         </h2>
-        <p class="text-gray-600">
-          On traditional platforms, black swan events and overnight gap-downs can leave you owing lakhs to your broker. TRADE246 eliminates personal debt liability completely.
+        <p class="text-gray-600 text-base leading-relaxed">
+          TRADE246 incorporates real-time margin monitoring that automatically protects 70% of your initial margin allocation and caps your loss exposure before equity drops below zero.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Feature Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
         
         <div class="p-6 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
           <div class="w-10 h-10 rounded-xl bg-brandGreen text-white flex items-center justify-center font-bold">
-            <i class="fa-solid fa-shield-cat"></i>
+            <i class="fa-solid fa-chart-line-down"></i>
           </div>
-          <h3 class="font-heading font-bold text-lg text-gray-900">Zero Debt Risk Guarantee</h3>
-          <p class="text-gray-600 text-sm">Your maximum loss is strictly capped at your initial margin. You will NEVER owe a single rupee beyond what you deposited.</p>
+          <h3 class="font-heading font-bold text-lg text-gray-900">70% Margin Protection Cutoff</h3>
+          <p class="text-gray-600 text-sm">Positions automatically liquidate when remaining margin equity drops to 30%, retaining 70% protection against extreme slippage.</p>
         </div>
 
         <div class="p-6 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
           <div class="w-10 h-10 rounded-xl bg-brandGreen text-white flex items-center justify-center font-bold">
-            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <i class="fa-solid fa-ban"></i>
           </div>
-          <h3 class="font-heading font-bold text-lg text-gray-900">No Legal Recovery Notices</h3>
-          <p class="text-gray-600 text-sm">Traditional Indian brokers send legal notices to recover negative balances. TRADE246 absorbs gap risk so you never face broker recovery calls.</p>
+          <h3 class="font-heading font-bold text-lg text-gray-900">Absolute Zero Negative Risk</h3>
+          <p class="text-gray-600 text-sm">Your account balance can never drop below ₹0 under any circumstance, even during overnight gaps or high market volatility.</p>
         </div>
 
         <div class="p-6 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
           <div class="w-10 h-10 rounded-xl bg-brandGreen text-white flex items-center justify-center font-bold">
-            <i class="fa-solid fa-rotate-left"></i>
+            <i class="fa-solid fa-sliders"></i>
           </div>
-          <h3 class="font-heading font-bold text-lg text-gray-900">Automatic Account Balance Reset</h3>
-          <p class="text-gray-600 text-sm">If extreme volatility pushes an account negative, our system resets your balance back to ₹0 automatically before your next deposit.</p>
+          <h3 class="font-heading font-bold text-lg text-gray-900">Strict Capital Loss Cap</h3>
+          <p class="text-gray-600 text-sm">Maximum downside on any position is limited strictly to your deposited margin—no liability beyond your trade allocation.</p>
         </div>
 
+      </div>
+
+      <!-- Direct Comparison Table -->
+      <div class="bg-gray-50 rounded-2xl border border-gray-200 p-6 sm:p-8">
+        <h3 class="font-heading font-bold text-xl text-gray-900 mb-6 text-center">
+          Risk Management Comparison: Traditional Brokers vs TRADE246
+        </h3>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
+            <thead>
+              <tr class="bg-gray-900 text-white">
+                <th class="p-4 font-bold">Feature / Risk Scenario</th>
+                <th class="p-4 font-bold text-gray-300">Traditional Brokers (Zerodha / Upstox / 5paisa)</th>
+                <th class="p-4 font-bold text-emerald-400 bg-gray-800">TRADE246 Platform</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 font-medium">
+              <tr>
+                <td class="p-4 text-gray-900 font-bold">Protection Threshold</td>
+                <td class="p-4 text-gray-600">Manual Stop Loss or Standard End-of-Day Liquidation</td>
+                <td class="p-4 text-brandGreen font-bold bg-emerald-50/50">Automated 70% Margin Protection Cutoff</td>
+              </tr>
+              <tr>
+                <td class="p-4 text-gray-900 font-bold">Overnight Black Swan Gaps</td>
+                <td class="p-4 text-brandRed font-semibold">Price gaps pass stop loss; trader bears full deficit</td>
+                <td class="p-4 text-brandGreen font-bold bg-emerald-50/50">Automated circuit trigger prevents balance going negative</td>
+              </tr>
+              <tr>
+                <td class="p-4 text-gray-900 font-bold">Maximum Downside Exposure</td>
+                <td class="p-4 text-gray-600">100% of deployed margin + gap slippage liabilities</td>
+                <td class="p-4 text-brandGreen font-bold bg-emerald-50/50">Strictly capped at allocated margin equity</td>
+              </tr>
+              <tr>
+                <td class="p-4 text-gray-900 font-bold">Account Balance Floor</td>
+                <td class="p-4 text-brandRed font-semibold">Can drop into negative balance</td>
+                <td class="p-4 text-brandGreen font-bold bg-emerald-50/50">Hard floor at ₹0 (Auto Reset Protection)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>
   </section>
 
-  <!-- Footer (Copyright removed as requested) -->
+  <!-- Footer -->
   <footer class="bg-gray-950 text-gray-400 border-t border-gray-900 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
       <div class="flex items-center gap-3">

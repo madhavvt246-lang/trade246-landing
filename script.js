@@ -1,9 +1,9 @@
 /**
- * TRADE246 Calculation & Lead Recording Engine
+ * TRADE246 Calculation Engine & Google Sheet Lead Capture
  */
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Mobile Drawer Toggle
+  // Mobile Navigation Drawer Toggle
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenu = document.getElementById("mobileMenu");
   if (mobileMenuBtn && mobileMenu) {
@@ -101,39 +101,62 @@ document.addEventListener("DOMContentLoaded", () => {
   const t246NetWorthVal = document.getElementById("t246NetWorthVal");
   const dynamicAdvantageBanner = document.getElementById("dynamicAdvantageBanner");
 
-  // --- 1. RELIABLE LEAD RECORDING SYSTEM ---
-  function recordLeadData(name, phone) {
-    const leadPayload = {
+  // Web App Endpoint provided for Google Apps Script Sheet backend
+  const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzM0HhybnJ12-PR3hOWIc48kHiASv2Ry58XmG4wXFnNOqZZ8u3LazP8TYKxJDLQ5ZmC/exec";
+
+  // --- 1. GOOGLE SHEET LEAD SUBMISSION ---
+  async function submitLeadToBackend(name, phone) {
+    const payload = {
       name: name,
       phone: phone,
       timestamp: new Date().toISOString(),
-      source: "TRADE246 Calculator Gateway"
+      source: "TRADE246 Calculator"
     };
 
-    // Backup 1: Save to Browser LocalStorage
+    // Backup to LocalStorage
     try {
-      const existingLeads = JSON.parse(localStorage.getItem("trade246_leads") || "[]");
-      existingLeads.push(leadPayload);
-      localStorage.setItem("trade246_leads", JSON.stringify(existingLeads));
+      const existing = JSON.parse(localStorage.getItem("t246_leads") || "[]");
+      existing.push(payload);
+      localStorage.setItem("t246_leads", JSON.stringify(existing));
     } catch (e) {
-      console.warn("LocalStorage save error:", e);
+      console.warn("LocalStorage backup error:", e);
     }
 
-    // Backup 2: Post to Webhook/Sheet endpoint if configured
-    const WEBHOOK_URL = "https://script.google.com/macros/s/YOUR_APPS_SCRIPT_ID/exec"; 
-    
-    if (WEBHOOK_URL && !WEBHOOK_URL.includes("YOUR_APPS_SCRIPT_ID")) {
-      fetch(WEBHOOK_URL, {
+    // Direct fetch to Apps Script Web App
+    try {
+      await fetch(GOOGLE_SHEET_WEB_APP_URL, {
         method: "POST",
         mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(leadPayload)
-      }).catch(err => console.error("Sheet Sync Error:", err));
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.error("Fetch JSON failed, trying URLSearchParams fallback:", err);
+      // Fallback method using standard form encoded URL parameters
+      try {
+        const formData = new URLSearchParams();
+        formData.append("name", name);
+        formData.append("phone", phone);
+        formData.append("timestamp", new Date().toISOString());
+
+        await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: formData.toString()
+        });
+      } catch (fallbackErr) {
+        console.error("Fallback submission failed:", fallbackErr);
+      }
     }
   }
 
   if (leadForm) {
-    leadForm.addEventListener("submit", (e) => {
+    leadForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const name = leadName.value.trim();
@@ -146,17 +169,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       phoneValidationMsg.classList.add("hidden");
 
-      // Indicate progress
-      leadSubmitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Unlocking...`;
-      
-      // Save data
-      recordLeadData(name, phone);
+      leadSubmitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Unlocking Calculator...`;
 
+      // Trigger Lead Recording
+      await submitLeadToBackend(name, phone);
+
+      // Transition UI to Calculator
       setTimeout(() => {
         leadGateContainer.classList.add("hidden");
         calculatorContent.classList.remove("hidden");
         runCalculation();
-      }, 400);
+      }, 300);
     });
   }
 
@@ -244,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tradGrossProfit = tradExposure * (profitMovePct / 100);
     const t246GrossProfit = t246Exposure * (profitMovePct / 100);
 
-    // Taxation & Fees (Avg ~12% tax deduction on traditional vs 0% on TRADE246)
+    // Taxation & Fees Calculation (Avg 12% tax deduction on traditional vs 0% on TRADE246)
     const tradTaxRate = 0.12; 
     const tradNetProfit = Math.max(0, tradGrossProfit * (1 - tradTaxRate) - 30);
     const t246NetProfit = t246GrossProfit; // 0 tax & 0 brokerage
