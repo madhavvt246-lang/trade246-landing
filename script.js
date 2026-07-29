@@ -1,8 +1,33 @@
 /**
- * TRADE246 Calculation Engine & Google Sheet Lead Capture
+ * TRADE246 Master Script
+ * Handles Logo Fallbacks, Lead Capture to Google Sheets, and Calculator Engine
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+  // --- 1. LOGO FALLBACK HANDLING (HEADER & FOOTER) ---
+  // Ensure broken image icons never appear if logo.png is missing or fails to load
+  function setupLogoFallback(imgId, fallbackId) {
+    const img = document.getElementById(imgId);
+    const fallback = document.getElementById(fallbackId);
+
+    if (img) {
+      // If image fails to load, hide image and show fallback emblem
+      img.onerror = () => {
+        img.classList.add("hidden");
+        if (fallback) fallback.classList.remove("hidden");
+      };
+
+      // Check if image is already broken on page load
+      if (img.complete && img.naturalWidth === 0) {
+        img.classList.add("hidden");
+        if (fallback) fallback.classList.remove("hidden");
+      }
+    }
+  }
+
+  setupLogoFallback("brandLogoImg", "brandLogoFallback");
+  setupLogoFallback("footerLogoImg", "footerLogoFallback");
+
   // Mobile Navigation Drawer Toggle
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenu = document.getElementById("mobileMenu");
@@ -10,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileMenuBtn.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
   }
 
-  // --- LEVERAGE & TRADITIONAL BROKER MATRIX ---
+  // --- 2. LEVERAGE & TRADITIONAL BROKER MATRIX ---
   const rulesMatrix = {
     nse_futures: {
       intraday: { t246Lev: 500, tradLev: 5, label: "500x (0.20% Margin)" },
@@ -101,10 +126,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const t246NetWorthVal = document.getElementById("t246NetWorthVal");
   const dynamicAdvantageBanner = document.getElementById("dynamicAdvantageBanner");
 
-  // Web App Endpoint provided for Google Apps Script Sheet backend
+  // Web App Endpoint for Google Apps Script Sheet backend
   const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzM0HhybnJ12-PR3hOWIc48kHiASv2Ry58XmG4wXFnNOqZZ8u3LazP8TYKxJDLQ5ZmC/exec";
 
-  // --- 1. GOOGLE SHEET LEAD SUBMISSION ---
+  // --- 3. GOOGLE SHEET LEAD SUBMISSION ---
   async function submitLeadToBackend(name, phone) {
     const payload = {
       name: name,
@@ -113,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
       source: "TRADE246 Calculator"
     };
 
-    // Backup to LocalStorage
+    // Backup lead locally
     try {
       const existing = JSON.parse(localStorage.getItem("t246_leads") || "[]");
       existing.push(payload);
@@ -122,19 +147,16 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("LocalStorage backup error:", e);
     }
 
-    // Direct fetch to Apps Script Web App
+    // Submit payload to Google Apps Script Web App
     try {
       await fetch(GOOGLE_SHEET_WEB_APP_URL, {
         method: "POST",
         mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
     } catch (err) {
-      console.error("Fetch JSON failed, trying URLSearchParams fallback:", err);
-      // Fallback method using standard form encoded URL parameters
+      console.error("JSON fetch failed, trying URLSearchParams fallback:", err);
       try {
         const formData = new URLSearchParams();
         formData.append("name", name);
@@ -144,9 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
         await fetch(GOOGLE_SHEET_WEB_APP_URL, {
           method: "POST",
           mode: "no-cors",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData.toString()
         });
       } catch (fallbackErr) {
@@ -171,10 +191,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       leadSubmitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Unlocking Calculator...`;
 
-      // Trigger Lead Recording
+      // Trigger Lead Submission
       await submitLeadToBackend(name, phone);
 
-      // Transition UI to Calculator
+      // Reveal Calculator UI
       setTimeout(() => {
         leadGateContainer.classList.add("hidden");
         calculatorContent.classList.remove("hidden");
@@ -183,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- 2. CONTROLS TOGGLES ---
+  // --- 4. CALCULATOR INTERFACE CONTROLS ---
   function updateControlVisibility() {
     const selectedAsset = assetSelect.value;
     
@@ -196,10 +216,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  assetSelect.addEventListener("change", () => {
-    updateControlVisibility();
-    runCalculation();
-  });
+  if (assetSelect) {
+    assetSelect.addEventListener("change", () => {
+      updateControlVisibility();
+      runCalculation();
+    });
+  }
 
   if (btnOptionBuy && btnOptionSell) {
     btnOptionBuy.addEventListener("click", () => {
@@ -227,18 +249,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     btnHolding.addEventListener("click", () => {
       currentHoldingType = "holding";
-      btnHolding.className = "holding-btn active py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
       btnIntraday.className = "holding-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
       btnHolding.className = "holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
       runCalculation();
     });
   }
 
-  investmentSlider.addEventListener("input", runCalculation);
-  profitSlider.addEventListener("input", runCalculation);
+  if (investmentSlider) investmentSlider.addEventListener("input", runCalculation);
+  if (profitSlider) profitSlider.addEventListener("input", runCalculation);
 
-  // --- 3. CALCULATION ENGINE ---
+  // --- 5. CALCULATION ENGINE LOGIC ---
   function runCalculation() {
+    if (!investmentSlider || !profitSlider || !assetSelect) return;
+
     const capital = parseFloat(investmentSlider.value) || 1000;
     const profitMovePct = parseFloat(profitSlider.value) || 1;
     const selectedAsset = assetSelect.value;
@@ -254,10 +277,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const tradLev = rule.tradLev;
 
     // Display Text Updates
-    activeLeverageDisplay.innerText = rule.label;
-    capitalValDisplay.innerText = `₹${capital.toLocaleString("en-IN")}`;
-    profitPctDisplay.innerText = `${profitMovePct}%`;
-    tableProfitPct.innerText = `${profitMovePct}%`;
+    if (activeLeverageDisplay) activeLeverageDisplay.innerText = rule.label;
+    if (capitalValDisplay) capitalValDisplay.innerText = `₹${capital.toLocaleString("en-IN")}`;
+    if (profitPctDisplay) profitPctDisplay.innerText = `${profitMovePct}%`;
+    if (tableProfitPct) tableProfitPct.innerText = `${profitMovePct}%`;
 
     // Exposures
     const tradExposure = capital * tradLev;
@@ -267,7 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tradGrossProfit = tradExposure * (profitMovePct / 100);
     const t246GrossProfit = t246Exposure * (profitMovePct / 100);
 
-    // Taxation & Fees Calculation (Avg 12% tax deduction on traditional vs 0% on TRADE246)
+    // Taxation & Charges (Avg 12% tax deduction on traditional vs 0% on TRADE246)
     const tradTaxRate = 0.12; 
     const tradNetProfit = Math.max(0, tradGrossProfit * (1 - tradTaxRate) - 30);
     const t246NetProfit = t246GrossProfit; // 0 tax & 0 brokerage
@@ -276,22 +299,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const tradNetWorth = capital + tradNetProfit;
     const t246NetWorth = capital + t246NetProfit;
 
-    // INR Formatter
+    // Currency Formatter
     const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
 
-    tradExposureVal.innerText = formatINR(tradExposure);
-    t246ExposureVal.innerText = formatINR(t246Exposure);
+    if (tradExposureVal) tradExposureVal.innerText = formatINR(tradExposure);
+    if (t246ExposureVal) t246ExposureVal.innerText = formatINR(t246Exposure);
 
-    tradGrossProfitVal.innerText = formatINR(tradGrossProfit);
-    t246GrossProfitVal.innerText = formatINR(t246GrossProfit);
+    if (tradGrossProfitVal) tradGrossProfitVal.innerText = formatINR(tradGrossProfit);
+    if (t246GrossProfitVal) t246GrossProfitVal.innerText = formatINR(t246GrossProfit);
 
-    tradProfitVal.innerText = formatINR(tradNetProfit);
-    t246ProfitVal.innerText = formatINR(t246NetProfit);
+    if (tradProfitVal) tradProfitVal.innerText = formatINR(tradNetProfit);
+    if (t246ProfitVal) t246ProfitVal.innerText = formatINR(t246NetProfit);
 
-    tradNetWorthVal.innerText = formatINR(tradNetWorth);
-    t246NetWorthVal.innerText = formatINR(t246NetWorth);
+    if (tradNetWorthVal) tradNetWorthVal.innerText = formatINR(tradNetWorth);
+    if (t246NetWorthVal) t246NetWorthVal.innerText = formatINR(t246NetWorth);
 
-    // Dynamic Banner Advantage Text
-    dynamicAdvantageBanner.innerText = `Net advantage with TRADE246 : ${t246Lev}x more exposure`;
+    if (dynamicAdvantageBanner) {
+      dynamicAdvantageBanner.innerText = `Net advantage with TRADE246 : ${t246Lev}x more exposure`;
+    }
   }
 });
