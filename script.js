@@ -291,8 +291,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const t246GrossProfit = t246Exposure * (profitMovePct / 100);
 
     // Taxation & Charges (Avg 12% tax deduction on traditional vs 0% on TRADE246)
-    const tradTaxRate = 0.12; 
-    const tradNetProfit = Math.max(0, tradGrossProfit * (1 - tradTaxRate) - 30);
+    // --- ACCURATE BROKERAGE & TAXATION CALCULATION ---
+    const totalTurnover = tradExposure * 2; // Round-trip (Buy + Sell exposure)
+
+    // Standard discount broker rule: Min(₹20, 0.03% of turnover) per leg
+    const brokeragePerLeg = Math.min(20, totalTurnover * 0.0003);
+    const totalBrokerage = brokeragePerLeg * 2; // Buy + Sell
+
+    // Statutory Taxes (STT, GST, Stamp Duty, SEBI turnover charges ≈ 0.02% of turnover)
+    const totalStatutoryTaxes = totalTurnover * 0.0002;
+
+    // Total Friction on Traditional Broker
+    const totalTradFriction = totalBrokerage + totalStatutoryTaxes;
+
+    // Net Profit after deducting brokerage and taxes
+    const tradNetProfit = Math.max(0, tradGrossProfit - totalTradFriction);
+    const t246NetProfit = t246GrossProfit; // ₹0 Brokerage & ₹0 Tax on TRADE246
     const t246NetProfit = t246GrossProfit; // 0 tax & 0 brokerage
 
     // Account Totals
