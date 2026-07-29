@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Trade246 | Zero Brokerage Multi-Asset Trading Platform for India</title>
-  <meta name="description" content="Trade NSE, NFO, Forex, Commodities, Crypto, US Stocks, and Indices with ₹0 brokerage on Trade246." />
+  <title>Trade246 | Multi-Asset Trading Platform with Up to 500x Leverage</title>
+  <meta name="description" content="Trade NSE, NFO, Forex, Commodities, Crypto, US Stocks, and Indices with ₹0 brokerage and high leverage on Trade246." />
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -46,11 +46,9 @@
       
       <!-- Logo Container -->
       <a href="#" class="flex items-center gap-3 group">
-        <!-- Logo Image Placeholder -->
-        <img src="logo.png" alt="Trade246 Logo" class="h-10 w-auto object-contain" id="brandLogoImg" onerror="this.style.display='none'; document.getElementById('brandLogoFallback').style.display='flex';" />
+        <img src="logo.png" alt="Trade246 Logo" class="h-10 w-auto object-contain" id="brandLogoImg" onerror="this.classList.add('hidden'); document.getElementById('brandLogoFallback').classList.remove('hidden');" />
         
-        <!-- Fallback Logo Badge -->
-        <div id="brandLogoFallback" class="w-10 h-10 rounded-xl bg-brandGreen text-white flex items-center justify-center font-heading font-extrabold text-xl shadow-md group-hover:bg-brandGreenLight transition-all">
+        <div id="brandLogoFallback" class="hidden w-10 h-10 rounded-xl bg-brandGreen text-white flex items-center justify-center font-heading font-extrabold text-xl shadow-md">
           T
         </div>
         <span class="font-heading font-extrabold text-2xl tracking-tight text-gray-900">
@@ -58,11 +56,12 @@
         </span>
       </a>
 
-      <!-- Desktop Nav Links -->
+      <!-- Navigation -->
       <nav class="hidden md:flex items-center gap-8 font-medium text-gray-600">
-        <a href="#features" class="hover:text-brandGreen transition-colors">Why Trade246</a>
+        <a href="#calculator" class="hover:text-brandGreen transition-colors">Calculator</a>
+        <a href="#hero" class="hover:text-brandGreen transition-colors">Overview</a>
         <a href="#assets" class="hover:text-brandGreen transition-colors">Asset Classes</a>
-        <a href="#calculator" class="hover:text-brandGreen transition-colors">Savings Calculator</a>
+        <a href="#nbp" class="hover:text-brandGreen transition-colors">Protection Features</a>
       </nav>
 
       <!-- CTA -->
@@ -78,19 +77,210 @@
       </button>
     </div>
 
-    <!-- Mobile Nav Drawer -->
+    <!-- Mobile Drawer -->
     <div id="mobileMenu" class="hidden md:hidden bg-white border-b border-gray-100 px-4 pt-2 pb-6 space-y-3">
-      <a href="#features" class="block py-2 text-gray-600 font-medium">Why Trade246</a>
+      <a href="#calculator" class="block py-2 text-gray-600 font-medium">Calculator</a>
+      <a href="#hero" class="block py-2 text-gray-600 font-medium">Overview</a>
       <a href="#assets" class="block py-2 text-gray-600 font-medium">Asset Classes</a>
-      <a href="#calculator" class="block py-2 text-gray-600 font-medium">Savings Calculator</a>
+      <a href="#nbp" class="block py-2 text-gray-600 font-medium">Protection Features</a>
       <a href="https://app.trade246.live/register" target="_blank" class="block w-full text-center px-5 py-3 rounded-xl text-sm font-semibold text-white bg-brandGreen">
         Register Now
       </a>
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <section class="pt-32 pb-20 md:pt-40 md:pb-28 bg-gradient-to-b from-emerald-50/40 via-white to-gray-50">
+  <!-- 1. CALCULATOR SECTION (MOVED TO TOP) -->
+  <section id="calculator" class="pt-28 pb-16 bg-gray-100 border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-10 space-y-3">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-brandGreen">Interactive Margin & Profit Engine</h2>
+        <p class="font-heading font-extrabold text-3xl sm:text-4xl text-gray-900">
+          Trade246 vs Traditional Brokers Calculator
+        </p>
+      </div>
+
+      <!-- LEAD FORM GATEWAY -->
+      <div id="leadGateContainer" class="max-w-xl mx-auto bg-white p-8 rounded-3xl shadow-xl border border-gray-200">
+        <div class="text-center mb-6">
+          <div class="w-12 h-12 rounded-full bg-emerald-100 text-brandGreen flex items-center justify-center mx-auto mb-3 text-xl font-bold">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <h3 class="font-heading font-bold text-2xl text-gray-900">Unlock Profit & Savings Calculator</h3>
+          <p class="text-sm text-gray-600 mt-1">Enter your details to calculate leverage, upfront margin & profit comparison.</p>
+        </div>
+
+        <form id="leadForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Your Full Name</label>
+            <input type="text" id="leadName" placeholder="e.g. Rahul Sharma" required 
+                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brandGreen focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Mobile Number (WhatsApp)</label>
+            <input type="tel" id="leadPhone" placeholder="10-digit mobile number" required maxlength="10"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brandGreen focus:outline-none" />
+            <span id="phoneValidationMsg" class="text-xs text-brandRed hidden mt-1 block">Please enter a valid 10-digit Indian mobile number.</span>
+          </div>
+
+          <button type="submit" class="w-full py-4 rounded-xl font-bold text-white bg-brandGreen hover:bg-brandGreenLight shadow-lg transition-all text-base">
+            Unlock Calculator Now
+          </button>
+        </form>
+      </div>
+
+      <!-- CALCULATOR ENGINE (Hidden until lead submitted) -->
+      <div id="calculatorContent" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Controls Column -->
+        <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-200 space-y-6">
+          
+          <!-- Asset Category Selection -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">1. Select Asset Class</label>
+            <select id="assetSelect" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brandGreen">
+              <option value="nse_futures">NSE Futures (NIFTY / BANKNIFTY)</option>
+              <option value="nse_options">NSE Options (Index & Stock Options)</option>
+              <option value="mcx_futures">MCX Commodity Futures (Gold, Silver, Crude)</option>
+              <option value="mcx_options">MCX Options</option>
+              <option value="nse_equity">NSE Spot Equities (Cash Stocks)</option>
+              <option value="crypto">Crypto (BTC, ETH, Altcoins)</option>
+              <option value="forex">Global Forex & COMEX</option>
+              <option value="us_stocks">US Stocks (Apple, Tesla, NVDA)</option>
+            </select>
+          </div>
+
+          <!-- Dynamic Option Type Selection (NSE & MCX Options) -->
+          <div id="optionTypeWrapper" class="hidden">
+            <label class="block text-sm font-bold text-gray-700 mb-2">2. Option Position Type</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button id="btnOptionBuy" data-option="buying" class="option-type-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm">
+                Option Buying
+              </button>
+              <button id="btnOptionSell" data-option="selling" class="option-type-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen">
+                Option Selling
+              </button>
+            </div>
+          </div>
+
+          <!-- Trade Holding Type Toggle -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2"><span id="stepHoldingNum">2</span>. Trade Holding Type</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button id="btnIntraday" data-type="intraday" class="holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm">
+                Intraday
+              </button>
+              <button id="btnHolding" data-type="holding" class="holding-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen">
+                Holding / Overnight
+              </button>
+            </div>
+          </div>
+
+          <!-- Fixed Leverage Display Indicator -->
+          <div class="p-4 rounded-xl bg-gray-50 border border-gray-200 flex justify-between items-center">
+            <div>
+              <p class="text-xs text-gray-500 font-semibold uppercase">Platform Fixed Advantage</p>
+              <p id="activeLeverageDisplay" class="font-heading font-extrabold text-xl text-brandGreen">500x (0.20% Margin)</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 bg-emerald-100 text-brandGreen font-bold rounded-full">Fixed Rule</span>
+          </div>
+
+          <!-- Slider 1: Capital Input -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label class="text-sm font-bold text-gray-700">Investment Capital (₹)</label>
+              <span id="capitalValDisplay" class="font-bold text-brandGreen">₹50,000</span>
+            </div>
+            <input type="range" id="investmentSlider" min="1000" max="1000000" step="1000" value="50000"
+                   class="w-full accent-brandGreen cursor-pointer" />
+            <div class="flex justify-between text-xs text-gray-400 font-medium">
+              <span>₹1,000</span>
+              <span>₹10,00,000</span>
+            </div>
+          </div>
+
+          <!-- Slider 2: Asset Movement / Profit % -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label class="text-sm font-bold text-gray-700">Asset Price Movement (%)</label>
+              <span id="profitPctDisplay" class="font-bold text-brandGreen">5%</span>
+            </div>
+            <input type="range" id="profitSlider" min="1" max="100" step="1" value="5"
+                   class="w-full accent-brandGreen cursor-pointer" />
+            <div class="flex justify-between text-xs text-gray-400 font-medium">
+              <span>1%</span>
+              <span>100%</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Output Breakdown Column -->
+        <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-200 space-y-6">
+          
+          <h3 class="font-heading font-bold text-xl text-gray-900 pb-3 border-b border-gray-100">
+            Side-by-Side Comparison
+          </h3>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="border-b border-gray-200 bg-gray-50 text-gray-600">
+                  <th class="p-3 font-bold">Metric</th>
+                  <th class="p-3 font-bold text-brandRed">Traditional Broker</th>
+                  <th class="p-3 font-bold text-brandGreen bg-emerald-50/60">Trade246</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 font-medium">
+                <tr>
+                  <td class="p-3 text-gray-600">Effective Exposure / Market Control</td>
+                  <td id="tradExposureVal" class="p-3 text-gray-900">₹2,50,000</td>
+                  <td id="t246ExposureVal" class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹2,50,00,000</td>
+                </tr>
+                <tr>
+                  <td class="p-3 text-gray-600">Profit Generated (<span id="tableProfitPct">5%</span> Move)</td>
+                  <td id="tradProfitVal" class="p-3 text-gray-900 font-bold">₹2,500</td>
+                  <td id="t246ProfitVal" class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹1,25,000</td>
+                </tr>
+                <tr>
+                  <td class="p-3 text-gray-600">Total Net Worth After Trade</td>
+                  <td id="tradNetWorthVal" class="p-3 text-gray-900">₹52,500</td>
+                  <td id="t246NetWorthVal" class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹1,75,000</td>
+                </tr>
+                <tr>
+                  <td class="p-3 text-gray-600">Brokerage Charges</td>
+                  <td class="p-3 text-brandRed font-bold">₹20 - ₹200+</td>
+                  <td class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹0.00 FREE</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Dynamic Advantage Banner -->
+          <div class="p-6 rounded-2xl bg-brandGreen text-white shadow-xl space-y-2">
+            <p class="text-xs font-bold text-emerald-300 uppercase tracking-widest">Platform Advantage</p>
+            <div class="flex justify-between items-baseline">
+              <p id="dynamicAdvantageBanner" class="font-heading font-extrabold text-2xl text-white">Net advantage with Trade246 : 500x more exposure</p>
+            </div>
+          </div>
+
+          <!-- WhatsApp Chat Button -->
+          <a id="whatsappChatBtn" target="_blank" 
+             href="https://api.whatsapp.com/send?phone=+919027237174&text=Hello!%20I%27d%20like%20to%20connect%20with%20my%20Relationship%20Manager."
+             class="w-full py-4 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg transition-all flex items-center justify-center gap-3 text-base">
+            <i class="fa-brands fa-whatsapp text-2xl"></i>
+            Chat with Sales via WhatsApp
+          </a>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. HERO OVERVIEW SECTION -->
+  <section id="hero" class="py-20 bg-gradient-to-b from-white via-emerald-50/30 to-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         
@@ -105,19 +295,17 @@
           </h1>
 
           <p class="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-            Trade NSE, NFO, EQ, Forex, Commodities, Crypto, US Equities, and Indices with ultra-low latency and dynamic leverage up to 500x.
+            Trade NSE Futures, Options, EQ, MCX, Crypto, Forex, and US Equities with maximum capital efficiency and automated Negative Balance Protection.
           </p>
 
           <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-            <a href="#calculator" class="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-white bg-brandGreen hover:bg-brandGreenLight shadow-xl shadow-brandGreen/25 transition-all text-center">
-              Calculate Savings
-            </a>
-            <a href="https://app.trade246.live/register" target="_blank" class="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 shadow-sm transition-all text-center">
-              Open Free Account
+            <a href="https://app.trade246.live/register" target="_blank" class="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-white bg-brandGreen hover:bg-brandGreenLight shadow-xl shadow-brandGreen/25 transition-all text-center">
+              Trade now at Trade246
             </a>
           </div>
         </div>
 
+        <!-- Hero Card -->
         <div class="lg:col-span-5">
           <div class="rounded-2xl bg-gray-900 border border-gray-800 p-6 shadow-2xl text-white space-y-6">
             <div class="flex justify-between items-center pb-4 border-b border-gray-800">
@@ -125,7 +313,7 @@
                 <div class="w-8 h-8 rounded-lg bg-brandGreen flex items-center justify-center font-bold text-xs">T246</div>
                 <div>
                   <p class="text-sm font-semibold">NIFTY 50 Futures</p>
-                  <p class="text-xs text-gray-400">NSE / MCX Derivative</p>
+                  <p class="text-xs text-gray-400">NSE Derivative Contract</p>
                 </div>
               </div>
               <span class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 text-xs font-semibold">500x Intraday</span>
@@ -133,22 +321,22 @@
 
             <div>
               <p class="text-xs text-gray-400 uppercase tracking-wider">Required Margin Savings</p>
-              <p class="text-3xl font-heading font-extrabold text-emerald-400 mt-1">Up to 90% Less Capital</p>
+              <p class="text-3xl font-heading font-extrabold text-emerald-400 mt-1">Up to 98% Less Capital</p>
             </div>
 
             <div class="bg-gray-800/80 rounded-xl p-4 border border-gray-700/50 space-y-2 text-sm">
               <div class="flex justify-between text-xs">
-                <span class="text-gray-400">Traditional Broker Fee:</span>
-                <span class="text-brandRed font-semibold">₹20 - ₹200+ / Trade</span>
+                <span class="text-gray-400">Traditional Broker Margin:</span>
+                <span class="text-brandRed font-semibold">₹72,000 / Lot</span>
               </div>
               <div class="flex justify-between font-bold">
-                <span class="text-gray-200">Trade246 Brokerage:</span>
-                <span class="text-emerald-400">₹0.00 FREE</span>
+                <span class="text-gray-200">Trade246 Intraday Margin:</span>
+                <span class="text-emerald-400">₹12,000 (0.20%)</span>
               </div>
             </div>
 
-            <a href="https://app.trade246.live/register" target="_blank" class="block w-full text-center py-3 rounded-xl bg-brandGreen hover:bg-brandGreenLight text-white font-semibold text-sm">
-              Trade Now at app.trade246.live
+            <a href="https://app.trade246.live/register" target="_blank" class="block w-full text-center py-3 rounded-xl bg-brandGreen hover:bg-brandGreenLight text-white font-semibold text-sm transition-all">
+              Trade now at Trade246
             </a>
           </div>
         </div>
@@ -157,23 +345,23 @@
     </div>
   </section>
 
-  <!-- Asset Classes Grid -->
+  <!-- 3. ASSETS SECTION -->
   <section id="assets" class="py-20 bg-gray-900 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-emerald-400">Unmatched Asset Access</h2>
+        <h2 class="text-xs font-bold uppercase tracking-widest text-emerald-400">Multi-Asset Platform</h2>
         <p class="font-heading font-extrabold text-3xl sm:text-4xl text-white">
-          Trade All 7 Asset Classes
+          Trade Global & Indian Markets with High Leverage
         </p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         
         <div class="p-6 rounded-2xl bg-gray-800/60 border border-gray-700/60 flex flex-col justify-between">
           <div>
-            <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-building-columns"></i></div>
-            <h3 class="font-heading font-bold text-xl mb-2">NSE / BSE / MCX</h3>
-            <p class="text-gray-400 text-sm mb-6">Up to 500x Intraday & 50x Overnight leverage.</p>
+            <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-chart-line"></i></div>
+            <h3 class="font-heading font-bold text-xl mb-2">NSE Futures</h3>
+            <p class="text-gray-400 text-sm mb-4">500x Intraday (0.20% Margin) & 50x Holding leverage on Nifty, BankNifty & Stock Futures.</p>
           </div>
           <a href="https://app.trade246.live/register" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300">
             Trade Now <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -183,8 +371,8 @@
         <div class="p-6 rounded-2xl bg-gray-800/60 border border-gray-700/60 flex flex-col justify-between">
           <div>
             <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-chart-diagram"></i></div>
-            <h3 class="font-heading font-bold text-xl mb-2">Options</h3>
-            <p class="text-gray-400 text-sm mb-6">Up to 10x Intraday & 2x Overnight leverage.</p>
+            <h3 class="font-heading font-bold text-xl mb-2">NSE / MCX Options</h3>
+            <p class="text-gray-400 text-sm mb-4">10x Option Buying leverage (10% premium upfront) & Flat ₹7,500/lot Option Selling.</p>
           </div>
           <a href="https://app.trade246.live/register" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300">
             Trade Now <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -193,9 +381,9 @@
 
         <div class="p-6 rounded-2xl bg-gray-800/60 border border-gray-700/60 flex flex-col justify-between">
           <div>
-            <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-chart-line"></i></div>
-            <h3 class="font-heading font-bold text-xl mb-2">EQ (Equities)</h3>
-            <p class="text-gray-400 text-sm mb-6">Up to 20x Intraday & 10x Overnight leverage.</p>
+            <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-gem"></i></div>
+            <h3 class="font-heading font-bold text-xl mb-2">MCX Commodity Futures</h3>
+            <p class="text-gray-400 text-sm mb-4">500x Intraday & 20x Holding leverage on Gold, Silver, Crude Oil, and Natural Gas.</p>
           </div>
           <a href="https://app.trade246.live/register" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300">
             Trade Now <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -204,9 +392,9 @@
 
         <div class="p-6 rounded-2xl bg-gray-800/60 border border-gray-700/60 flex flex-col justify-between">
           <div>
-            <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-globe"></i></div>
-            <h3 class="font-heading font-bold text-xl mb-2">Forex Currency</h3>
-            <p class="text-gray-400 text-sm mb-6">100x Intraday & 100x Overnight leverage.</p>
+            <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-building-columns"></i></div>
+            <h3 class="font-heading font-bold text-xl mb-2">NSE Spot Equities</h3>
+            <p class="text-gray-400 text-sm mb-4">20x Intraday (5% Margin) & 10x Holding leverage vs 1x full cash required on traditional brokers.</p>
           </div>
           <a href="https://app.trade246.live/register" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300">
             Trade Now <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -216,8 +404,8 @@
         <div class="p-6 rounded-2xl bg-gray-800/60 border border-gray-700/60 flex flex-col justify-between">
           <div>
             <div class="text-emerald-400 text-2xl mb-4"><i class="fa-brands fa-bitcoin"></i></div>
-            <h3 class="font-heading font-bold text-xl mb-2">Crypto</h3>
-            <p class="text-gray-400 text-sm mb-6">200x Intraday & 200x Overnight leverage.</p>
+            <h3 class="font-heading font-bold text-xl mb-2">Crypto & Forex</h3>
+            <p class="text-gray-400 text-sm mb-4">200x leverage on BTC/ETH & 100x leverage on FX currency pairs (EURUSD, XAUUSD).</p>
           </div>
           <a href="https://app.trade246.live/register" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300">
             Trade Now <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -227,19 +415,8 @@
         <div class="p-6 rounded-2xl bg-gray-800/60 border border-gray-700/60 flex flex-col justify-between">
           <div>
             <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-arrow-trend-up"></i></div>
-            <h3 class="font-heading font-bold text-xl mb-2">US Equities</h3>
-            <p class="text-gray-400 text-sm mb-6">100x Intraday & 100x Overnight leverage.</p>
-          </div>
-          <a href="https://app.trade246.live/register" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300">
-            Trade Now <i class="fa-solid fa-arrow-right text-xs"></i>
-          </a>
-        </div>
-
-        <div class="p-6 rounded-2xl bg-gray-800/60 border border-gray-700/60 sm:col-span-2 flex flex-col justify-between">
-          <div>
-            <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-chart-area"></i></div>
-            <h3 class="font-heading font-bold text-xl mb-2">Global Indices</h3>
-            <p class="text-gray-400 text-sm mb-6">Trade Nasdaq, S&P 500, Dow Jones with high leverage.</p>
+            <h3 class="font-heading font-bold text-xl mb-2">US Stocks & Indices</h3>
+            <p class="text-gray-400 text-sm mb-4">100x leverage on Apple, Tesla, NVDA, Nasdaq & S&P 500 without foreign exchange fees.</p>
           </div>
           <a href="https://app.trade246.live/register" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300">
             Trade Now <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -250,168 +427,50 @@
     </div>
   </section>
 
-  <!-- Interactive Savings Calculator Section -->
-  <section id="calculator" class="py-20 bg-gray-100">
+  <!-- 4. NEGATIVE BALANCE PROTECTION FEATURE SECTION -->
+  <section id="nbp" class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
-      <div class="text-center max-w-3xl mx-auto mb-12 space-y-4">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-brandGreen">Interactive Brokerage Comparison</h2>
-        <p class="font-heading font-extrabold text-3xl sm:text-4xl text-gray-900">
-          Compare Charges & Calculate Your Savings
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-brandGreen font-semibold text-xs uppercase tracking-wider">
+          <i class="fa-solid fa-shield-halved"></i> Institutional Risk Protection
+        </div>
+        <h2 class="font-heading font-extrabold text-3xl sm:text-4xl text-gray-900">
+          Automated Negative Balance Protection (NBP)
+        </h2>
+        <p class="text-gray-600">
+          Trade high leverage with total peace of mind. Trade246 protects your capital from extreme market gap-downs and unexpected black swan events.
         </p>
       </div>
 
-      <!-- LEAD CAPTURE FORM GATEWAY -->
-      <div id="leadGateContainer" class="max-w-xl mx-auto bg-white p-8 rounded-3xl shadow-xl border border-gray-200 mb-12">
-        <div class="text-center mb-6">
-          <div class="w-12 h-12 rounded-full bg-emerald-100 text-brandGreen flex items-center justify-center mx-auto mb-3 text-xl font-bold">
-            <i class="fa-solid fa-lock"></i>
-          </div>
-          <h3 class="font-heading font-bold text-2xl text-gray-900">Unlock Savings Calculator</h3>
-          <p class="text-sm text-gray-600 mt-1">Enter your details to calculate live leverage & brokerage savings.</p>
-        </div>
-
-        <form id="leadForm" class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Your Full Name</label>
-            <input type="text" id="leadName" placeholder="e.g. Rahul Sharma" required 
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brandGreen focus:outline-none" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Mobile Number (WhatsApp)</label>
-            <input type="tel" id="leadPhone" placeholder="10-digit phone number" required maxlength="10"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brandGreen focus:outline-none" />
-            <span id="phoneValidationMsg" class="text-xs text-brandRed hidden mt-1 block">Please enter a valid 10-digit Indian mobile number.</span>
-          </div>
-
-          <button type="submit" class="w-full py-4 rounded-xl font-bold text-white bg-brandGreen hover:bg-brandGreenLight shadow-lg transition-all text-base">
-            Unlock Calculator Now
-          </button>
-        </form>
-      </div>
-
-      <!-- CALCULATOR (Initially Hidden) -->
-      <div id="calculatorContent" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         
-        <!-- Controls Column -->
-        <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-200 space-y-6">
-          
-          <!-- Asset Category Selection -->
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">1. Select Asset Class</label>
-            <select id="assetSelect" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brandGreen">
-              <option value="nse_bse_mcx">NSE / BSE / MCX (Indices & Commodities)</option>
-              <option value="option">Options (Stock & Index Options)</option>
-              <option value="eq">EQ (Equities / Stocks)</option>
-              <option value="forex">Forex (Currencies)</option>
-              <option value="crypto">Crypto (BTC, ETH, Altcoins)</option>
-              <option value="us_equities">US Equities (Apple, Tesla, Meta)</option>
-            </select>
+        <div class="p-6 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-brandGreen text-white flex items-center justify-center font-bold">
+            <i class="fa-solid fa-ban"></i>
           </div>
-
-          <!-- Trade Holding Type Toggle -->
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">2. Trade Holding Type</label>
-            <div class="grid grid-cols-2 gap-3" id="holdingTypeContainer">
-              <button id="btnIntraday" data-type="intraday" class="holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm">
-                Intraday
-              </button>
-              <button id="btnOvernight" data-type="overnight" class="holding-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen">
-                Overnight
-              </button>
-            </div>
-          </div>
-
-          <!-- Dynamic Leverage Selection -->
-          <div>
-            <div class="flex justify-between items-center mb-2">
-              <label class="text-sm font-bold text-gray-700">3. Select Leverage</label>
-              <span id="maxLeverageBadge" class="text-xs font-bold text-brandGreen bg-emerald-100 px-2.5 py-0.5 rounded-full">Max: 500x</span>
-            </div>
-            <div class="grid grid-cols-4 gap-3" id="leverageContainer">
-              <!-- Dynamically populated by JS -->
-            </div>
-          </div>
-
-          <!-- Investment Capital Input + Slider -->
-          <div class="space-y-2">
-            <label class="text-sm font-bold text-gray-700 block">4. Investment Capital (₹)</label>
-            
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">₹</span>
-              <input type="number" id="investmentInput" value="50000" min="1000" max="1000000" step="5000" 
-                     class="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-300 font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-brandGreen" />
-            </div>
-
-            <input type="range" id="investmentSlider" min="1000" max="1000000" step="5000" value="50000"
-                   class="w-full accent-brandGreen cursor-pointer" />
-          </div>
-
+          <h3 class="font-heading font-bold text-lg text-gray-900">Zero Debt Risk Guarantee</h3>
+          <p class="text-gray-600 text-sm">Your account balance can NEVER go below ₹0. Even during worst-case overnight market gaps, you never owe money to the broker.</p>
         </div>
 
-        <!-- Output Breakdown Column (Side-by-Side Comparison) -->
-        <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-200 space-y-6">
-          
-          <h3 class="font-heading font-bold text-xl text-gray-900 pb-3 border-b border-gray-100">
-            Side-by-Side Comparison
-          </h3>
-
-          <!-- SIDE-BY-SIDE COMPARISON TABLE -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-              <thead>
-                <tr class="border-b border-gray-200 bg-gray-50 text-gray-600">
-                  <th class="p-3 font-bold">Feature / Metric</th>
-                  <th class="p-3 font-bold text-brandRed">Traditional Broker</th>
-                  <th class="p-3 font-bold text-brandGreen bg-emerald-50/60">Trade246</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 font-medium">
-                <tr>
-                  <td class="p-3 text-gray-600">Leverage Provided</td>
-                  <td id="tradLeverageVal" class="p-3 text-brandRed font-bold">Up to 5x</td>
-                  <td id="t246LeverageVal" class="p-3 text-brandGreen font-bold bg-emerald-50/60">500x</td>
-                </tr>
-                <tr>
-                  <td class="p-3 text-gray-600">Total Trade Exposure</td>
-                  <td id="tradExposureVal" class="p-3 text-gray-900">₹2,50,000</td>
-                  <td id="t246ExposureVal" class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹2,50,00,000</td>
-                </tr>
-                <tr>
-                  <td class="p-3 text-gray-600">Estimated Brokerage</td>
-                  <td id="tradBrokerageVal" class="p-3 text-brandRed font-bold">₹20 - ₹150</td>
-                  <td class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹0.00 FREE</td>
-                </tr>
-                <tr>
-                  <td class="p-3 text-gray-600">Overnight Holding Fee</td>
-                  <td class="p-3 text-brandRed font-bold">Standard Interest</td>
-                  <td class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹0.00 FREE</td>
-                </tr>
-              </tbody>
-            </table>
+        <div class="p-6 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-brandGreen text-white flex items-center justify-center font-bold">
+            <i class="fa-solid fa-bell-slash"></i>
           </div>
+          <h3 class="font-heading font-bold text-lg text-gray-900">No Margin Calls</h3>
+          <p class="text-gray-600 text-sm">Traditional brokers issue legal notices and demand cash top-ups for negative shortfalls. On Trade246, negative balances reset automatically to ₹0.</p>
+        </div>
 
-          <!-- Highlight Box -->
-          <div class="p-6 rounded-2xl bg-brandGreen text-white shadow-xl space-y-2">
-            <p class="text-xs font-bold text-emerald-300 uppercase tracking-widest">Net Advantage with Trade246</p>
-            <div class="flex justify-between items-baseline">
-              <p id="totalSavedDisplay" class="font-heading font-extrabold text-3xl text-white">10x More Exposure</p>
-              <span class="text-xs font-semibold px-2.5 py-1 bg-white/20 rounded-full">₹0 Brokerage</span>
-            </div>
+        <div class="p-6 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-brandGreen text-white flex items-center justify-center font-bold">
+            <i class="fa-solid fa-piggy-bank"></i>
           </div>
-
-          <!-- Chat with Sales WhatsApp Link -->
-          <a id="whatsappChatBtn" target="_blank" 
-             href="https://api.whatsapp.com/send?phone=+919027237174&text=Hello!%20I%27d%20like%20to%20connect%20with%20my%20Relationship%20Manager."
-             class="w-full py-4 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg transition-all flex items-center justify-center gap-3 text-base">
-            <i class="fa-brands fa-whatsapp text-2xl"></i>
-            Chat with Sales via WhatsApp
-          </a>
-
+          <h3 class="font-heading font-bold text-lg text-gray-900">30% Capital Preservation</h3>
+          <p class="text-gray-600 text-sm">Our system automatically triggers stop-outs at 70% margin utilization, ensuring you retain 30% of your trade margin even in volatile market freezes.</p>
         </div>
 
       </div>
+
     </div>
   </section>
 
