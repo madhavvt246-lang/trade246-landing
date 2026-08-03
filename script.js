@@ -418,7 +418,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (tradGrossProfit > 0) {
             incomeTax = 0.15 * tradGrossProfit;
           }
-          currentTaxLabel = "15% Tax + FX Conversion";
+          currentTaxLabel = "10-30% Tax + FX Conversion";
           break;
       }
     }
