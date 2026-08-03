@@ -1,20 +1,18 @@
 /**
  * TRADE246 Master Script
- * Fixes: Top-of-page scroll force, dynamic brokerage calculation for small trades,
- * logo fallbacks, and Google Sheets lead capture.
+ * Integrated Master Calculation Rules Matrix for Traditional Broker Comparison.
  */
 
-// 1. FORCE PAGE TO LOAD AT THE TOP (Prevents auto-scrolling to bottom)
+// Force page to load at the top
 if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
 window.scrollTo(0, 0);
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Guarantee scroll top on DOM ready
   window.scrollTo(0, 0);
 
-  // --- 2. LOGO FALLBACK HANDLING (HEADER & FOOTER) ---
+  // --- LOGO FALLBACK HANDLING ---
   function setupLogoFallback(imgId, fallbackId) {
     const img = document.getElementById(imgId);
     const fallback = document.getElementById(fallbackId);
@@ -42,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileMenuBtn.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
   }
 
-  // --- 3. LEVERAGE & TRADITIONAL BROKER MATRIX ---
+  // --- LEVERAGE & DISPLAY DISPLAY MATRIX ---
   const rulesMatrix = {
     nse_futures: {
       intraday: { t246Lev: 500, tradLev: 5, label: "500x (0.20% Margin)" },
@@ -133,10 +131,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const t246NetWorthVal = document.getElementById("t246NetWorthVal");
   const dynamicAdvantageBanner = document.getElementById("dynamicAdvantageBanner");
 
-  // Web App Endpoint for Google Apps Script Sheet backend
+  // Web App Endpoint
   const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzM0HhybnJ12-PR3hOWIc48kHiASv2Ry58XmG4wXFnNOqZZ8u3LazP8TYKxJDLQ5ZmC/exec";
 
-  // --- 4. GOOGLE SHEET LEAD SUBMISSION ---
+  // --- GOOGLE SHEET LEAD SUBMISSION ---
   async function submitLeadToBackend(name, phone) {
     const payload = {
       name: name,
@@ -161,7 +159,6 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify(payload)
       });
     } catch (err) {
-      console.error("JSON fetch failed, trying fallback:", err);
       try {
         const formData = new URLSearchParams();
         formData.append("name", name);
@@ -206,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- 5. CALCULATOR INTERFACE CONTROLS ---
+  // --- CALCULATOR CONTROLS ---
   function updateControlVisibility() {
     const selectedAsset = assetSelect.value;
     
@@ -261,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (investmentSlider) investmentSlider.addEventListener("input", runCalculation);
   if (profitSlider) profitSlider.addEventListener("input", runCalculation);
 
-  // --- 6. REALISTIC CALCULATION ENGINE LOGIC ---
+  // --- MASTER CALCULATION MATRIX ENGINE ---
   function runCalculation() {
     if (!investmentSlider || !profitSlider || !assetSelect) return;
 
@@ -285,38 +282,110 @@ document.addEventListener("DOMContentLoaded", () => {
     if (profitPctDisplay) profitPctDisplay.innerText = `${profitMovePct}%`;
     if (tableProfitPct) tableProfitPct.innerText = `${profitMovePct}%`;
 
-    // Exposures
+    // 1. Exposure & Turnover Metrics
     const tradExposure = capital * tradLev;
     const t246Exposure = capital * t246Lev;
 
-    // Gross Profits before charges
-    const tradGrossProfit = tradExposure * (profitMovePct / 100);
-    const t246GrossProfit = t246Exposure * (profitMovePct / 100);
+    const buyTurnover = tradExposure;
+    const sellTurnover = buyTurnover * (1 + (profitMovePct / 100));
+    const totalTurnover = buyTurnover + sellTurnover;
 
-    // --- ACCURATE TRADITIONAL BROKER FEE MODEL ---
-    // Total turnover (Buy + Sell legs)
-    const roundTripTurnover = tradExposure * 2; 
+    const tradGrossProfit = sellTurnover - buyTurnover;
+    const t246GrossProfit = (t246Exposure * (1 + (profitMovePct / 100))) - t246Exposure;
 
-    // Brokerage: Min(₹20, 0.03% of turnover) per leg
-    const brokeragePerLeg = Math.min(20, roundTripTurnover * 0.0003);
-    const totalBrokerage = brokeragePerLeg * 2; 
+    // 2. Strict Mathematical Rules Matrix Computation
+    let brokerage = 0;
+    let sttCttTds = 0;
+    let exchangeFees = 0;
+    let sebiFees = 0;
+    let stampDuty = 0;
+    let incomeTax = 0;
+    let fxFees = 0;
 
-    // Statutory Taxes (STT, GST, Stamp Duty, Exchange Charges ≈ 0.02% total turnover)
-    const statutoryTaxes = roundTripTurnover * 0.0002;
+    switch (selectedAsset) {
+      case "nse_futures":
+        brokerage = Math.min(0.0003 * buyTurnover, 20) + Math.min(0.0003 * sellTurnover, 20);
+        sttCttTds = 0.0002 * sellTurnover;
+        exchangeFees = 0.0000188 * totalTurnover;
+        sebiFees = 0.000001 * totalTurnover;
+        stampDuty = 0.00002 * buyTurnover;
+        break;
 
-    const totalTradFriction = totalBrokerage + statutoryTaxes;
+      case "nse_options":
+        brokerage = 20 + 20; // Flat ₹20 buy + ₹20 sell
+        sttCttTds = 0.001 * sellTurnover;
+        exchangeFees = 0.000495 * totalTurnover;
+        sebiFees = 0.000001 * totalTurnover;
+        stampDuty = 0.00003 * buyTurnover;
+        break;
 
-    // Net Profits
-    const tradNetProfit = Math.max(0, tradGrossProfit - totalTradFriction);
-    const t246NetProfit = t246GrossProfit; // ₹0 Brokerage & ₹0 Taxes on TRADE246
+      case "mcx_futures":
+        brokerage = Math.min(0.0003 * buyTurnover, 20) + Math.min(0.0003 * sellTurnover, 20);
+        sttCttTds = 0.0001 * sellTurnover; // CTT
+        exchangeFees = 0.000021 * totalTurnover;
+        sebiFees = 0.000001 * totalTurnover;
+        stampDuty = 0.00002 * buyTurnover;
+        break;
 
-    // Account Totals
+      case "mcx_options":
+        brokerage = 20 + 20; // Flat ₹40 fixed
+        sttCttTds = 0.0005 * sellTurnover; // CTT
+        exchangeFees = 0.000418 * totalTurnover;
+        sebiFees = 0.000001 * totalTurnover;
+        stampDuty = 0.00003 * buyTurnover;
+        break;
+
+      case "nse_equity":
+        if (currentHoldingType === "holding") { // Delivery
+          brokerage = 0;
+          sttCttTds = (0.001 * buyTurnover) + (0.001 * sellTurnover);
+          stampDuty = 0.00015 * buyTurnover;
+        } else { // Intraday
+          brokerage = Math.min(0.0003 * buyTurnover, 20) + Math.min(0.0003 * sellTurnover, 20);
+          sttCttTds = 0.00025 * sellTurnover;
+          stampDuty = 0.00003 * buyTurnover;
+        }
+        exchangeFees = 0.0000322 * totalTurnover;
+        sebiFees = 0.000001 * totalTurnover;
+        break;
+
+      case "crypto":
+        brokerage = (0.005 * buyTurnover) + (0.005 * sellTurnover); // Flat 0.5% per leg
+        sttCttTds = 0.01 * sellTurnover; // TDS 1% Sec 194S
+        if (tradGrossProfit > 0) {
+          incomeTax = 0.30 * tradGrossProfit; // Flat 30% tax on net capital gains
+        }
+        break;
+
+      case "forex":
+        brokerage = 0.0020 * totalTurnover; // Spread Markups (0.20%)
+        fxFees = 0.01 * capital; // 1% Currency conversion fee on capital
+        break;
+
+      case "us_stocks":
+        brokerage = (2 * 83) + (2 * 83); // Flat $2 per order converted to INR (~₹83/$)
+        fxFees = 0.015 * totalTurnover; // 1.5% FX conversion fee
+        break;
+    }
+
+    // GST Calculation: 18% of (Brokerage + Exchange Fees + SEBI Fees)
+    const gst = 0.18 * (brokerage + exchangeFees + sebiFees);
+
+    // Sum Mapped Outputs
+    const totalBrokerageCharges = brokerage;
+    const totalTaxation = sttCttTds + exchangeFees + sebiFees + stampDuty + gst + incomeTax + fxFees;
+    
+    // Net Take-Home Calculations
+    const tradNetProfit = Math.max(0, tradGrossProfit - totalBrokerageCharges - totalTaxation);
+    const t246NetProfit = t246GrossProfit; // ₹0 Brokerage & Taxes on TRADE246
+
     const tradNetWorth = capital + tradNetProfit;
     const t246NetWorth = capital + t246NetProfit;
 
     // Currency Formatter
     const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
 
+    // Update DOM Mapped Output Fields
     if (tradExposureVal) tradExposureVal.innerText = formatINR(tradExposure);
     if (t246ExposureVal) t246ExposureVal.innerText = formatINR(t246Exposure);
 
@@ -324,7 +393,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (t246GrossProfitVal) t246GrossProfitVal.innerText = formatINR(t246GrossProfit);
 
     if (tradProfitVal) tradProfitVal.innerText = formatINR(tradNetProfit);
-    if (t246ProfitVal) t246ProfitVal.innerText = formatINR(t246ProfitVal ? t246NetProfit : 0);
+    if (t246ProfitVal) t246ProfitVal.innerText = formatINR(t246NetProfit);
 
     if (tradNetWorthVal) tradNetWorthVal.innerText = formatINR(tradNetWorth);
     if (t246NetWorthVal) t246NetWorthVal.innerText = formatINR(t246NetWorth);
