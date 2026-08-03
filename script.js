@@ -1,17 +1,15 @@
 /**
- * TRADE246 Master Script
- * Fixes: Top-of-page scroll force, dynamic brokerage calculation for small trades,
- * logo fallbacks, and Google Sheets lead capture.
+ * TRADE246 Master Script - Comprehensive Brokerage & Tax Engine
+ * Implements strict statutory rules for Indian Discount Brokers vs TRADE246.
  */
 
-// 1. FORCE PAGE TO LOAD AT THE TOP (Prevents auto-scrolling to bottom)
+// 1. FORCE PAGE TO LOAD AT THE TOP
 if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
 window.scrollTo(0, 0);
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Guarantee scroll top on DOM ready
   window.scrollTo(0, 0);
 
   // --- 2. LOGO FALLBACK HANDLING (HEADER & FOOTER) ---
@@ -42,59 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileMenuBtn.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
   }
 
-  // --- 3. LEVERAGE & TRADITIONAL BROKER MATRIX ---
-  const rulesMatrix = {
-    nse_futures: {
-      intraday: { t246Lev: 500, tradLev: 5, label: "500x (0.20% Margin)" },
-      holding:  { t246Lev: 50,  tradLev: 1, label: "50x (2.00% Margin)" }
-    },
-    mcx_futures: {
-      intraday: { t246Lev: 500, tradLev: 5, label: "500x (0.20% Margin)" },
-      holding:  { t246Lev: 20,  tradLev: 1, label: "20x (5.00% Margin)" }
-    },
-    nse_options: {
-      buying: {
-        intraday: { t246Lev: 10, tradLev: 1, label: "10x (10% Premium Upfront)" },
-        holding:  { t246Lev: 2,  tradLev: 1, label: "2x (50% Premium Upfront)" }
-      },
-      selling: {
-        intraday: { t246Lev: 16, tradLev: 1, label: "Flat ₹7,500 / Lot (~16x vs ₹1.2L SPAN)" },
-        holding:  { t246Lev: 6,  tradLev: 1, label: "Flat ₹20,000 / Lot (~6x vs ₹1.2L SPAN)" }
-      }
-    },
-    mcx_options: {
-      buying: {
-        intraday: { t246Lev: 10, tradLev: 1, label: "10x (10% Premium Upfront)" },
-        holding:  { t246Lev: 2,  tradLev: 1, label: "2x (50% Premium Upfront)" }
-      },
-      selling: {
-        intraday: { t246Lev: 13.3, tradLev: 1, label: "Flat ₹7,500 / Lot (~13.3x vs ₹1L SPAN)" },
-        holding:  { t246Lev: 5,    tradLev: 1, label: "Flat ₹20,000 / Lot (~5x vs ₹1L SPAN)" }
-      }
-    },
-    nse_equity: {
-      intraday: { t246Lev: 20, tradLev: 5, label: "20x (5.00% Margin)" },
-      holding:  { t246Lev: 10, tradLev: 1, label: "10x (10.00% Margin)" }
-    },
-    crypto: {
-      intraday: { t246Lev: 200, tradLev: 1, label: "200x (0.50% Margin)" },
-      holding:  { t246Lev: 200, tradLev: 1, label: "200x (0.50% Margin)" }
-    },
-    forex: {
-      intraday: { t246Lev: 100, tradLev: 1, label: "100x (1.00% Margin)" },
-      holding:  { t246Lev: 100, tradLev: 1, label: "100x (1.00% Margin)" }
-    },
-    us_stocks: {
-      intraday: { t246Lev: 100, tradLev: 1, label: "100x (1.00% Margin)" },
-      holding:  { t246Lev: 100, tradLev: 1, label: "100x (1.00% Margin)" }
-    }
-  };
-
-  // Active State Variables
-  let currentHoldingType = "intraday";
-  let currentOptionType = "buying";
-
-  // DOM Elements
+  // --- 3. DOM ELEMENTS ---
   const leadGateContainer = document.getElementById("leadGateContainer");
   const leadForm = document.getElementById("leadForm");
   const leadName = document.getElementById("leadName");
@@ -103,35 +49,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const leadSubmitBtn = document.getElementById("leadSubmitBtn");
   const calculatorContent = document.getElementById("calculatorContent");
 
+  // Calculator Controls
   const assetSelect = document.getElementById("assetSelect");
-  const optionTypeWrapper = document.getElementById("optionTypeWrapper");
-  const btnOptionBuy = document.getElementById("btnOptionBuy");
-  const btnOptionSell = document.getElementById("btnOptionSell");
-  
-  const btnIntraday = document.getElementById("btnIntraday");
-  const btnHolding = document.getElementById("btnHolding");
-  const stepHoldingNum = document.getElementById("stepHoldingNum");
+  const orderTypeSelect = document.getElementById("orderTypeSelect");
+  const buyPriceInput = document.getElementById("buyPriceInput");
+  const sellPriceInput = document.getElementById("sellPriceInput");
+  const quantityInput = document.getElementById("quantityInput");
 
-  const activeLeverageDisplay = document.getElementById("activeLeverageDisplay");
-  const investmentSlider = document.getElementById("investmentSlider");
-  const capitalValDisplay = document.getElementById("capitalValDisplay");
+  // Calculator Displays
+  const calcTotalTurnover = document.getElementById("calcTotalTurnover");
+  const calcGrossProfit = document.getElementById("calcGrossProfit");
+  const calcTotalBrokerage = document.getElementById("calcTotalBrokerage");
+  const calcTotalTaxes = document.getElementById("calcTotalTaxes");
+  const calcNetProfit = document.getElementById("calcNetProfit");
 
-  const profitSlider = document.getElementById("profitSlider");
-  const profitPctDisplay = document.getElementById("profitPctDisplay");
-
+  // Comparison Card Displays (Traditional vs TRADE246)
   const tradExposureVal = document.getElementById("tradExposureVal");
   const t246ExposureVal = document.getElementById("t246ExposureVal");
-  const tableProfitPct = document.getElementById("tableProfitPct");
-  
   const tradGrossProfitVal = document.getElementById("tradGrossProfitVal");
   const t246GrossProfitVal = document.getElementById("t246GrossProfitVal");
-  
   const tradProfitVal = document.getElementById("tradProfitVal");
   const t246ProfitVal = document.getElementById("t246ProfitVal");
-  
   const tradNetWorthVal = document.getElementById("tradNetWorthVal");
   const t246NetWorthVal = document.getElementById("t246NetWorthVal");
-  const dynamicAdvantageBanner = document.getElementById("dynamicAdvantageBanner");
 
   // Web App Endpoint for Google Apps Script Sheet backend
   const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzM0HhybnJ12-PR3hOWIc48kHiASv2Ry58XmG4wXFnNOqZZ8u3LazP8TYKxJDLQ5ZmC/exec";
@@ -206,136 +146,213 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- 5. CALCULATOR INTERFACE CONTROLS ---
-  function updateControlVisibility() {
-    const selectedAsset = assetSelect.value;
-    
-    if (selectedAsset === "nse_options" || selectedAsset === "mcx_options") {
-      optionTypeWrapper.classList.remove("hidden");
-      stepHoldingNum.innerText = "3";
+  // Dynamic Options Population for Order Types based on Asset Class
+  function populateOrderTypes() {
+    if (!assetSelect || !orderTypeSelect) return;
+    const category = assetSelect.value;
+    orderTypeSelect.innerHTML = "";
+
+    let options = [];
+    if (category === "equity") {
+      options = [
+        { value: "delivery", text: "Delivery" },
+        { value: "intraday", text: "Intraday" }
+      ];
+    } else if (category === "equity_options" || category === "commodity_options" || category === "currency_options") {
+      options = [
+        { value: "option_buying", text: "Option Buying" },
+        { value: "option_selling", text: "Option Selling" }
+      ];
     } else {
-      optionTypeWrapper.classList.add("hidden");
-      stepHoldingNum.innerText = "2";
+      options = [
+        { value: "intraday", text: "Intraday" },
+        { value: "holding", text: "Holding / Carry Forward" }
+      ];
     }
+
+    options.forEach(opt => {
+      const el = document.createElement("option");
+      el.value = opt.value;
+      el.innerText = opt.text;
+      orderTypeSelect.appendChild(el);
+    });
   }
 
   if (assetSelect) {
     assetSelect.addEventListener("change", () => {
-      updateControlVisibility();
+      populateOrderTypes();
       runCalculation();
     });
   }
 
-  if (btnOptionBuy && btnOptionSell) {
-    btnOptionBuy.addEventListener("click", () => {
-      currentOptionType = "buying";
-      btnOptionBuy.className = "option-type-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
-      btnOptionSell.className = "option-type-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
-      runCalculation();
-    });
+  [orderTypeSelect, buyPriceInput, sellPriceInput, quantityInput].forEach(element => {
+    if (element) {
+      element.addEventListener("input", runCalculation);
+      element.addEventListener("change", runCalculation);
+    }
+  });
 
-    btnOptionSell.addEventListener("click", () => {
-      currentOptionType = "selling";
-      btnOptionSell.className = "option-type-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
-      btnOptionBuy.className = "option-type-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
-      runCalculation();
-    });
+  // --- 5. MASTER CALCULATION ENGINE ---
+  function calculateTraditionalBrokerageAndTaxes(assetCategory, orderType, buyPrice, sellPrice, quantity) {
+    const buyTurnover = buyPrice * quantity;
+    const sellTurnover = sellPrice * quantity;
+    const totalTurnover = buyTurnover + sellTurnover;
+    const grossProfit = sellTurnover - buyTurnover;
+
+    let brokerage = 0;
+    let sttCtt = 0;
+    let exchangeCharge = 0;
+    let sebiFee = 0;
+    let stampDuty = 0;
+
+    // Standard SEBI Turnover fee (0.0001% on Total Turnover)
+    sebiFee = totalTurnover * 0.000001;
+
+    switch (assetCategory) {
+      case "equity":
+        if (orderType === "delivery") {
+          // 1. Equity - Delivery
+          brokerage = 0;
+          sttCtt = (buyTurnover * 0.001) + (sellTurnover * 0.001);
+          exchangeCharge = totalTurnover * 0.0000322;
+          stampDuty = buyTurnover * 0.00015;
+        } else {
+          // 2. Equity - Intraday
+          const buyBrok = Math.min(buyTurnover * 0.0003, 20);
+          const sellBrok = Math.min(sellTurnover * 0.0003, 20);
+          brokerage = buyBrok + sellBrok;
+
+          sttCtt = sellTurnover * 0.00025;
+          exchangeCharge = totalTurnover * 0.0000322;
+          stampDuty = buyTurnover * 0.00003;
+        }
+        break;
+
+      case "equity_futures":
+        // 3. Equity Futures
+        const buyBrokFut = Math.min(buyTurnover * 0.0003, 20);
+        const sellBrokFut = Math.min(sellTurnover * 0.0003, 20);
+        brokerage = buyBrokFut + sellBrokFut;
+
+        sttCtt = sellTurnover * 0.0002;
+        exchangeCharge = totalTurnover * 0.0000188;
+        stampDuty = buyTurnover * 0.00002;
+        break;
+
+      case "equity_options":
+        // 4. Equity Options
+        brokerage = 40; // ₹20 Buy + ₹20 Sell
+        sttCtt = sellTurnover * 0.001; // 0.1% on Premium Sell Turnover
+        exchangeCharge = totalTurnover * 0.000495;
+        stampDuty = buyTurnover * 0.00003;
+        break;
+
+      case "commodity_futures":
+        // 5. Commodity Futures (MCX)
+        const buyBrokCom = Math.min(buyTurnover * 0.0003, 20);
+        const sellBrokCom = Math.min(sellTurnover * 0.0003, 20);
+        brokerage = buyBrokCom + sellBrokCom;
+
+        sttCtt = sellTurnover * 0.0001; // CTT 0.01% on Sell
+        exchangeCharge = totalTurnover * 0.000021;
+        stampDuty = buyTurnover * 0.00002;
+        break;
+
+      case "commodity_options":
+        // 6. Commodity Options (MCX)
+        brokerage = 40; // ₹20 Buy + ₹20 Sell
+        sttCtt = sellTurnover * 0.0005; // CTT 0.05% on Sell
+        exchangeCharge = totalTurnover * 0.000418;
+        stampDuty = buyTurnover * 0.00003;
+        break;
+
+      case "currency_futures":
+        // 7. Currency Futures (NSE)
+        const buyBrokCur = Math.min(buyTurnover * 0.0003, 20);
+        const sellBrokCur = Math.min(sellTurnover * 0.0003, 20);
+        brokerage = buyBrokCur + sellBrokCur;
+
+        sttCtt = 0;
+        exchangeCharge = totalTurnover * 0.000009;
+        stampDuty = buyTurnover * 0.000001;
+        break;
+
+      case "currency_options":
+        // 8. Currency Options (NSE)
+        brokerage = 40; // ₹20 Buy + ₹20 Sell
+        sttCtt = 0;
+        exchangeCharge = totalTurnover * 0.00035;
+        stampDuty = buyTurnover * 0.000001;
+        break;
+
+      default:
+        break;
+    }
+
+    // GST: 18% of (Brokerage + Exchange Transaction Charge + SEBI Turnover Fee)
+    const gst = 0.18 * (brokerage + exchangeCharge + sebiFee);
+
+    // Sum of Statutory Taxes
+    const totalStatutoryTaxes = sttCtt + exchangeCharge + sebiFee + stampDuty + gst;
+    const netProfit = grossProfit - brokerage - totalStatutoryTaxes;
+
+    return {
+      buyTurnover,
+      sellTurnover,
+      totalTurnover,
+      grossProfit,
+      brokerage,
+      totalStatutoryTaxes,
+      netProfit
+    };
   }
 
-  if (btnIntraday && btnHolding) {
-    btnIntraday.addEventListener("click", () => {
-      currentHoldingType = "intraday";
-      btnIntraday.className = "holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
-      btnHolding.className = "holding-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
-      runCalculation();
-    });
-
-    btnHolding.addEventListener("click", () => {
-      currentHoldingType = "holding";
-      btnIntraday.className = "holding-btn active py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen";
-      btnHolding.className = "holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm";
-      runCalculation();
-    });
-  }
-
-  if (investmentSlider) investmentSlider.addEventListener("input", runCalculation);
-  if (profitSlider) profitSlider.addEventListener("input", runCalculation);
-
-  // --- 6. REALISTIC CALCULATION ENGINE LOGIC ---
   function runCalculation() {
-    if (!investmentSlider || !profitSlider || !assetSelect) return;
+    if (!buyPriceInput || !sellPriceInput || !quantityInput || !assetSelect) return;
 
-    const capital = parseFloat(investmentSlider.value) || 1000;
-    const profitMovePct = parseFloat(profitSlider.value) || 1;
-    const selectedAsset = assetSelect.value;
+    const buyPrice = parseFloat(buyPriceInput.value) || 0;
+    const sellPrice = parseFloat(sellPriceInput.value) || 0;
+    const quantity = parseFloat(quantityInput.value) || 0;
+    const assetCategory = assetSelect.value;
+    const orderType = orderTypeSelect ? orderTypeSelect.value : "intraday";
 
-    let rule;
-    if (selectedAsset === "nse_options" || selectedAsset === "mcx_options") {
-      rule = rulesMatrix[selectedAsset][currentOptionType][currentHoldingType];
-    } else {
-      rule = rulesMatrix[selectedAsset][currentHoldingType];
+    const res = calculateTraditionalBrokerageAndTaxes(assetCategory, orderType, buyPrice, sellPrice, quantity);
+
+    const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(val);
+
+    // Update Breakdown Section
+    if (calcTotalTurnover) calcTotalTurnover.innerText = formatINR(res.totalTurnover);
+    if (calcGrossProfit) {
+      calcGrossProfit.innerText = formatINR(res.grossProfit);
+      calcGrossProfit.className = res.grossProfit >= 0 ? "text-emerald-600 font-bold" : "text-red-600 font-bold";
+    }
+    if (calcTotalBrokerage) calcTotalBrokerage.innerText = formatINR(res.brokerage);
+    if (calcTotalTaxes) calcTotalTaxes.innerText = formatINR(res.totalStatutoryTaxes);
+    if (calcNetProfit) {
+      calcNetProfit.innerText = formatINR(res.netProfit);
+      calcNetProfit.className = res.netProfit >= 0 ? "text-emerald-600 font-bold text-xl" : "text-red-600 font-bold text-xl";
     }
 
-    const t246Lev = rule.t246Lev;
-    const tradLev = rule.tradLev;
+    // Update Comparison Cards (Traditional vs TRADE246)
+    if (tradExposureVal) tradExposureVal.innerText = formatINR(res.totalTurnover);
+    if (t246ExposureVal) t246ExposureVal.innerText = formatINR(res.totalTurnover);
 
-    // Display Text Updates
-    if (activeLeverageDisplay) activeLeverageDisplay.innerText = rule.label;
-    if (capitalValDisplay) capitalValDisplay.innerText = `₹${capital.toLocaleString("en-IN")}`;
-    if (profitPctDisplay) profitPctDisplay.innerText = `${profitMovePct}%`;
-    if (tableProfitPct) tableProfitPct.innerText = `${profitMovePct}%`;
+    if (tradGrossProfitVal) tradGrossProfitVal.innerText = formatINR(res.grossProfit);
+    if (t246GrossProfitVal) t246GrossProfitVal.innerText = formatINR(res.grossProfit);
 
-    // Exposures
-    const tradExposure = capital * tradLev;
-    const t246Exposure = capital * t246Lev;
+    if (tradProfitVal) tradProfitVal.innerText = formatINR(res.netProfit);
+    if (t246ProfitVal) t246ProfitVal.innerText = formatINR(res.grossProfit); // ₹0 Brokerage & ₹0 Taxes on TRADE246
 
-    // Gross Profits before charges
-    const tradGrossProfit = tradExposure * (profitMovePct / 100);
-    const t246GrossProfit = t246Exposure * (profitMovePct / 100);
-
-    // --- ACCURATE TRADITIONAL BROKER FEE MODEL ---
-    // Total turnover (Buy + Sell legs)
-    const roundTripTurnover = tradExposure * 2; 
-
-    // Brokerage: Min(₹20, 0.03% of turnover) per leg
-    const brokeragePerLeg = Math.min(20, roundTripTurnover * 0.0003);
-    const totalBrokerage = brokeragePerLeg * 2; 
-
-    // Statutory Taxes (STT, GST, Stamp Duty, Exchange Charges ≈ 0.02% total turnover)
-    const statutoryTaxes = roundTripTurnover * 0.0002;
-
-    const totalTradFriction = totalBrokerage + statutoryTaxes;
-
-    // Net Profits
-    const tradNetProfit = Math.max(0, tradGrossProfit - totalTradFriction);
-    const t246NetProfit = t246GrossProfit; // ₹0 Brokerage & ₹0 Taxes on TRADE246
-
-    // Account Totals
-    const tradNetWorth = capital + tradNetProfit;
-    const t246NetWorth = capital + t246NetProfit;
-
-    // Currency Formatter
-    const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
-
-    if (tradExposureVal) tradExposureVal.innerText = formatINR(tradExposure);
-    if (t246ExposureVal) t246ExposureVal.innerText = formatINR(t246Exposure);
-
-    if (tradGrossProfitVal) tradGrossProfitVal.innerText = formatINR(tradGrossProfit);
-    if (t246GrossProfitVal) t246GrossProfitVal.innerText = formatINR(t246GrossProfit);
-
-    if (tradProfitVal) tradProfitVal.innerText = formatINR(tradNetProfit);
-    if (t246ProfitVal) t246ProfitVal.innerText = formatINR(t246ProfitVal ? t246NetProfit : 0);
-
-    if (tradNetWorthVal) tradNetWorthVal.innerText = formatINR(tradNetWorth);
-    if (t246NetWorthVal) t246NetWorthVal.innerText = formatINR(t246NetWorth);
-
-    if (dynamicAdvantageBanner) {
-      dynamicAdvantageBanner.innerText = `Net advantage with TRADE246 : ${t246Lev}x more exposure`;
-    }
+    const initialCapital = res.buyTurnover;
+    if (tradNetWorthVal) tradNetWorthVal.innerText = formatINR(initialCapital + res.netProfit);
+    if (t246NetWorthVal) t246NetWorthVal.innerText = formatINR(initialCapital + res.grossProfit);
   }
+
+  // Initial population call
+  populateOrderTypes();
 });
 
-// Ensure top position after full window load
+// Final fallback to force scroll position at top on full window load
 window.onload = () => {
   window.scrollTo(0, 0);
 };
