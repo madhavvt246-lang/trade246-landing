@@ -259,6 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (profitSlider) profitSlider.addEventListener("input", runCalculation);
 
  // --- MASTER CALCULATION MATRIX ENGINE ---
+  // --- MASTER CALCULATION MATRIX ENGINE ---
   function runCalculation() {
     if (!investmentSlider || !profitSlider || !assetSelect) return;
 
@@ -266,8 +267,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const profitMovePct = parseFloat(profitSlider.value) || 1;
     const selectedAsset = assetSelect.value;
 
-    // Minimum margin required by traditional brokers for selling options (~1.2L per lot)
-    const TRADITIONAL_OPTION_SELLING_MIN_MARGIN = 120000;
+    // Standard Contract Notional Value for 1 Lot (Nifty/BankNifty SPAN basis)
+    const STANDARD_LOT_VALUE = 120000;
+    
+    // Traditional Broker Min SPAN Requirement (~₹1.2L per lot)
+    const TRAD_OPTION_SELLING_MIN_MARGIN = 120000;
+
+    // TRADE246 Min Fixed Margin Requirements
+    const T246_OPTION_SELLING_INTRADAY_MARGIN = 7500;
+    const T246_OPTION_SELLING_HOLDING_MARGIN = 20000;
 
     let rule;
     if (selectedAsset === "nse_options" || selectedAsset === "mcx_options") {
@@ -276,31 +284,46 @@ document.addEventListener("DOMContentLoaded", () => {
       rule = rulesMatrix[selectedAsset][currentHoldingType];
     }
 
-    const t246Lev = rule.t246Lev;
-    const tradLev = rule.tradLev;
-
-    // Check if user is attempting option selling with insufficient margin for traditional brokers
-    const isOptionSelling = (selectedAsset === "nse_options" || selectedAsset === "mcx_options") && currentOptionType === "selling";
-    const isInsufficientTradMargin = isOptionSelling && capital < TRADITIONAL_OPTION_SELLING_MIN_MARGIN;
-
     // Display Updates
     if (activeLeverageDisplay) activeLeverageDisplay.innerText = rule.label;
     if (capitalValDisplay) capitalValDisplay.innerText = `₹${capital.toLocaleString("en-IN")}`;
     if (profitPctDisplay) profitPctDisplay.innerText = `${profitMovePct}%`;
     if (tableProfitPct) tableProfitPct.innerText = `${profitMovePct}%`;
 
-    // 1. Exposure Metrics
-    const tradExposure = isInsufficientTradMargin ? 0 : capital * tradLev;
-    const t246Exposure = capital * t246Lev;
+    const isOptionSelling = (selectedAsset === "nse_options" || selectedAsset === "mcx_options") && currentOptionType === "selling";
 
+    // 1. Traditional Margin Gate & Exposure
+    const isInsufficientTradMargin = isOptionSelling && capital < TRAD_OPTION_SELLING_MIN_MARGIN;
+    const tradExposure = isInsufficientTradMargin ? 0 : capital * rule.tradLev;
+
+    // 2. TRADE246 Margin Gate & Exposure
+    let t246MarginReq = 0;
+    if (isOptionSelling) {
+      t246MarginReq = (currentHoldingType === "intraday") ? T246_OPTION_SELLING_INTRADAY_MARGIN : T246_OPTION_SELLING_HOLDING_MARGIN;
+    }
+
+    const isInsufficientT246Margin = isOptionSelling && capital < t246MarginReq;
+
+    let t246Exposure = 0;
+    if (!isInsufficientT246Margin) {
+      if (isOptionSelling) {
+        // Calculate max lots trader can afford
+        const lots = Math.floor(capital / t246MarginReq);
+        t246Exposure = lots * STANDARD_LOT_VALUE;
+      } else {
+        t246Exposure = capital * rule.t246Lev;
+      }
+    }
+
+    // 3. Turnover & Gross Profits
     const buyTurnover = tradExposure;
     const sellTurnover = buyTurnover * (1 + (profitMovePct / 100));
     const totalTurnover = buyTurnover + sellTurnover;
 
     const tradGrossProfit = isInsufficientTradMargin ? 0 : (sellTurnover - buyTurnover);
-    const t246GrossProfit = (t246Exposure * (1 + (profitMovePct / 100))) - t246Exposure;
+    const t246GrossProfit = isInsufficientT246Margin ? 0 : (t246Exposure * (profitMovePct / 100));
 
-    // 2. Strict Friction Computation (Traditional Broker)
+    // 4. Strict Friction Computation (Traditional Broker)
     let brokerage = 0;
     let sttCttTds = 0;
     let exchangeFees = 0;
@@ -320,8 +343,8 @@ document.addEventListener("DOMContentLoaded", () => {
           break;
 
         case "nse_options":
-          brokerage = 20 + 20; // Flat ₹20 Buy + ₹20 Sell
-          sttCttTds = 0.001 * sellTurnover; // 0.1% STT on Premium Sell
+          brokerage = 20 + 20;
+          sttCttTds = 0.001 * sellTurnover;
           exchangeFees = 0.000495 * totalTurnover;
           sebiFees = 0.000001 * totalTurnover;
           stampDuty = 0.00003 * buyTurnover;
@@ -369,41 +392,43 @@ document.addEventListener("DOMContentLoaded", () => {
           break;
 
         case "us_stocks":
-          brokerage = 166 + 166; // ~$2 buy + $2 sell in INR
+          brokerage = 166 + 166;
           fxFees = 0.015 * totalTurnover;
           break;
       }
     }
 
-    // GST 18% on (Brokerage + Exchange Fees + SEBI Fees)
     const gst = 0.18 * (brokerage + exchangeFees + sebiFees);
-
     const totalDeductions = brokerage + sttCttTds + exchangeFees + sebiFees + stampDuty + gst + incomeTax + fxFees;
 
-    // Net Take-Home Calculations (Floor at 0 if fees exceed gross return)
+    // 5. Net Take-Home Calculations
     const tradNetProfit = isInsufficientTradMargin ? 0 : Math.max(0, tradGrossProfit - totalDeductions);
-    const t246NetProfit = t246GrossProfit; 
+    const t246NetProfit = isInsufficientT246Margin ? 0 : t246GrossProfit; 
 
     const tradNetWorth = isInsufficientTradMargin ? capital : (capital + (tradGrossProfit - totalDeductions));
-    const t246NetWorth = capital + t246NetProfit;
+    const t246NetWorth = isInsufficientT246Margin ? capital : (capital + t246NetProfit);
 
     const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
 
     // DOM Updates
     if (tradExposureVal) tradExposureVal.innerText = isInsufficientTradMargin ? "₹0 (Blocked)" : formatINR(tradExposure);
-    if (t246ExposureVal) t246ExposureVal.innerText = formatINR(t246Exposure);
+    if (t246ExposureVal) t246ExposureVal.innerText = isInsufficientT246Margin ? `₹0 (Min ₹${t246MarginReq.toLocaleString("en-IN")})` : formatINR(t246Exposure);
 
     if (tradGrossProfitVal) tradGrossProfitVal.innerText = isInsufficientTradMargin ? "N/A" : formatINR(tradGrossProfit);
-    if (t246GrossProfitVal) t246GrossProfitVal.innerText = formatINR(t246GrossProfit);
+    if (t246GrossProfitVal) t246GrossProfitVal.innerText = isInsufficientT246Margin ? "N/A" : formatINR(t246GrossProfit);
 
     if (tradProfitVal) tradProfitVal.innerText = isInsufficientTradMargin ? "₹0 (No Margin)" : formatINR(tradNetProfit);
-    if (t246ProfitVal) t246ProfitVal.innerText = formatINR(t246NetProfit);
+    if (t246ProfitVal) t246ProfitVal.innerText = isInsufficientT246Margin ? "₹0 (No Margin)" : formatINR(t246NetProfit);
 
     if (tradNetWorthVal) tradNetWorthVal.innerText = formatINR(tradNetWorth);
     if (t246NetWorthVal) t246NetWorthVal.innerText = formatINR(t246NetWorth);
 
     if (dynamicAdvantageBanner) {
-      dynamicAdvantageBanner.innerText = `Net advantage with TRADE246 : ${t246Lev}x more exposure`;
+      if (isInsufficientT246Margin) {
+        dynamicAdvantageBanner.innerText = `Min Capital Required for Option Selling on TRADE246: ₹${t246MarginReq.toLocaleString("en-IN")}`;
+      } else {
+        dynamicAdvantageBanner.innerText = `Net advantage with TRADE246 : ${rule.t246Lev}x more exposure`;
+      }
     }
   }
 });
