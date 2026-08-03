@@ -262,17 +262,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function runCalculation() {
     if (!investmentSlider || !profitSlider || !assetSelect) return;
 
-    const capital = parseFloat(investmentSlider.value) || 1000;
-    const profitMovePct = parseFloat(profitSlider.value) || 1;
+    const capital = parseFloat(investmentSlider.value) || 0;
+    const profitMovePct = parseFloat(profitSlider.value) || 0;
     const selectedAsset = assetSelect.value;
 
-    // Standard Contract Notional Value for 1 Lot (Nifty/BankNifty/MCX SPAN basis)
     const STANDARD_LOT_VALUE = 120000;
-    
-    // Traditional Broker Min SPAN Requirement (~₹1.2L per lot)
     const TRAD_OPTION_SELLING_MIN_MARGIN = 120000;
 
-    // TRADE246 Min Fixed Margin Requirements
     const T246_OPTION_SELLING_INTRADAY_MARGIN = 7500;
     const T246_OPTION_SELLING_HOLDING_MARGIN = 20000;
 
@@ -283,7 +279,6 @@ document.addEventListener("DOMContentLoaded", () => {
       rule = rulesMatrix[selectedAsset][currentHoldingType];
     }
 
-    // Display Updates
     if (activeLeverageDisplay) activeLeverageDisplay.innerText = rule.label;
     if (capitalValDisplay) capitalValDisplay.innerText = `₹${capital.toLocaleString("en-IN")}`;
     if (profitPctDisplay) profitPctDisplay.innerText = `${profitMovePct}%`;
@@ -306,7 +301,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let t246Exposure = 0;
     if (!isInsufficientT246Margin) {
       if (isOptionSelling) {
-        // Calculate max lots trader can afford
         const lots = Math.floor(capital / t246MarginReq);
         t246Exposure = lots * STANDARD_LOT_VALUE;
       } else {
@@ -358,8 +352,6 @@ document.addEventListener("DOMContentLoaded", () => {
           break;
 
         case "mcx_options":
-          // FIXED: Removed mandatory fixed high charges that forced micro returns to ₹1.
-          // Standard Option flat brokerage + statutory taxes applied strictly.
           brokerage = 40; 
           sttCttTds = 0.0005 * sellTurnover;
           exchangeFees = 0.000418 * totalTurnover;
@@ -382,27 +374,26 @@ document.addEventListener("DOMContentLoaded", () => {
           break;
 
         case "crypto":
-          // FIXED: Replaced arbitrary hardcoded deductions (which caused a 76% profit cut) 
-          // with standard exchange fee + tax rate (13% max statutory estimate)
-          brokerage = 20; 
+          // Scaled Fee: 0.20% turnover or flat ₹20 minimum
+          brokerage = Math.max(20, 0.002 * totalTurnover); 
           if (tradGrossProfit > 0) {
             incomeTax = 0.13 * tradGrossProfit;
           }
           break;
 
         case "forex":
-          // FIXED: Aligned backend logic with UI text '6% - 13% Tax' (Replaced hardcoded 30% deduction)
-          brokerage = 20;
+          // Scaled Fee: 0.15% turnover or flat ₹20 minimum
+          brokerage = Math.max(20, 0.0015 * totalTurnover);
           if (tradGrossProfit > 0) {
             incomeTax = 0.13 * tradGrossProfit;
           }
           break;
 
         case "us_stocks":
-          // FIXED: Removed arbitrary ₹423 flat overhead penalty that dropped ₹1,000 capital down to ₹627
-          brokerage = 20;
+          // Scaled Fee: 0.25% turnover or flat ₹20 minimum
+          brokerage = Math.max(20, 0.0025 * totalTurnover);
           if (tradGrossProfit > 0) {
-            incomeTax = 0.10 * tradGrossProfit; // Standard 10% LRS/tax estimate
+            incomeTax = 0.10 * tradGrossProfit;
           }
           break;
       }
@@ -412,11 +403,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const totalDeductions = brokerage + sttCttTds + exchangeFees + sebiFees + stampDuty + gst + incomeTax + fxFees;
 
     // 5. Net Take-Home Calculations
-    const tradNetProfit = isInsufficientTradMargin ? 0 : Math.max(0, tradGrossProfit - totalDeductions);
+    const rawTradNetProfit = tradGrossProfit - totalDeductions;
+    const tradNetProfit = isInsufficientTradMargin ? 0 : Math.max(0, rawTradNetProfit);
     const t246NetProfit = isInsufficientT246Margin ? 0 : t246GrossProfit; 
 
-    // FIXED: Corrected Net Worth calculation for Traditional Broker to prevent balance drops below capital when net profit is capped at 0
-    const tradNetWorth = isInsufficientTradMargin ? capital : (capital + tradNetProfit);
+    // True Net Worth math (Accounts for friction eating into principal on micro moves)
+    const tradNetWorth = isInsufficientTradMargin ? capital : Math.max(0, capital + rawTradNetProfit);
     const t246NetWorth = isInsufficientT246Margin ? capital : (capital + t246NetProfit);
 
     const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
