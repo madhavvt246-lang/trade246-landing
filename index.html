@@ -44,7 +44,7 @@
   <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       
-      <!-- Logo Container -->
+      <!-- Logo Container (Text removed, image/graphic only) -->
       <a href="#" class="flex items-center group">
         <img src="logo.png" alt="TRADE246" class="h-10 w-auto object-contain" id="brandLogoImg" onerror="this.classList.add('hidden'); document.getElementById('brandLogoFallback').classList.remove('hidden');" />
         
@@ -91,7 +91,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-10 space-y-3">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-brandGreen">Interactive Tax & Brokerage Engine</h2>
+        <h2 class="text-xs font-bold uppercase tracking-widest text-brandGreen">Interactive Margin & Profit Engine</h2>
         <p class="font-heading font-extrabold text-3xl sm:text-4xl text-gray-900">
           TRADE246 vs Traditional Brokers Calculator
         </p>
@@ -104,7 +104,7 @@
             <i class="fa-solid fa-lock"></i>
           </div>
           <h3 class="font-heading font-bold text-2xl text-gray-900">Unlock Profit & Savings Calculator</h3>
-          <p class="text-sm text-gray-600 mt-1">Enter your details to calculate exact brokerage, statutory taxes, and net take-home profit.</p>
+          <p class="text-sm text-gray-600 mt-1">Enter your details to calculate leverage, upfront margin & profit comparison.</p>
         </div>
 
         <form id="leadForm" class="space-y-4">
@@ -131,118 +131,134 @@
       <div id="calculatorContent" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         <!-- Controls Column -->
-        <div class="lg:col-span-5 bg-white p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-200 space-y-5">
-          <h3 class="font-heading font-bold text-xl text-gray-900 pb-2 border-b border-gray-100">
-            Trade Input Details
-          </h3>
+        <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-200 space-y-6">
           
-          <!-- Asset Class Selection -->
+          <!-- Asset Category Selection -->
           <div>
-            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">1. Asset Class</label>
+            <label class="block text-sm font-bold text-gray-700 mb-2">1. Select Asset Class</label>
             <select id="assetSelect" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brandGreen">
-              <option value="equity">Equity (NSE/BSE Spot)</option>
-              <option value="equity_futures">Equity Futures</option>
-              <option value="equity_options">Equity Options</option>
-              <option value="commodity_futures">Commodity Futures (MCX)</option>
-              <option value="commodity_options">Commodity Options (MCX)</option>
-              <option value="currency_futures">Currency Futures (NSE)</option>
-              <option value="currency_options">Currency Options (NSE)</option>
+              <option value="nse_futures">NSE/BSE Futures (NIFTY / BANKNIFTY / SENSEX)</option>
+              <option value="nse_options">NSE/BSE Options (Index & Stock Options)</option>
+              <option value="mcx_futures">MCX Commodity Futures (Gold, Silver, Crude)</option>
+              <option value="mcx_options">MCX Options</option>
+              <option value="nse_equity">NSE/BSE Spot Equities (Cash Stocks)</option>
+              <option value="crypto">Crypto (BTC, ETH, Altcoins)</option>
+              <option value="forex">Global Forex & COMEX</option>
+              <option value="us_stocks">US Stocks (Apple, Tesla, NVDA)</option>
             </select>
           </div>
 
-          <!-- Order Type Selection -->
-          <div>
-            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">2. Order Type</label>
-            <select id="orderTypeSelect" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brandGreen">
-              <!-- Dynamically populated via JS -->
-            </select>
+          <!-- Dynamic Option Type Selection -->
+          <div id="optionTypeWrapper" class="hidden">
+            <label class="block text-sm font-bold text-gray-700 mb-2">2. Option Position Type</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button id="btnOptionBuy" data-option="buying" class="option-type-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm">
+                Option Buying
+              </button>
+              <button id="btnOptionSell" data-option="selling" class="option-type-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen">
+                Option Selling
+              </button>
+            </div>
           </div>
 
-          <!-- Buy Price Input -->
+          <!-- Trade Holding Type Toggle -->
           <div>
-            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">3. Buy Price (₹ / unit)</label>
-            <input type="number" id="buyPriceInput" value="500" min="0.01" step="any"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300 font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brandGreen" />
+            <label class="block text-sm font-bold text-gray-700 mb-2"><span id="stepHoldingNum">2</span>. Trade Holding Type</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button id="btnIntraday" data-type="intraday" class="holding-btn active py-3 rounded-xl border-2 border-brandGreen bg-emerald-50 text-brandGreen font-bold text-sm">
+                Intraday
+              </button>
+              <button id="btnHolding" data-type="holding" class="holding-btn py-3 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:border-brandGreen">
+                Holding / Overnight
+              </button>
+            </div>
           </div>
 
-          <!-- Sell Price Input -->
-          <div>
-            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">4. Sell Price (₹ / unit)</label>
-            <input type="number" id="sellPriceInput" value="525" min="0.01" step="any"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300 font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brandGreen" />
+          <!-- Platform Advantage Display Indicator -->
+          <div class="p-4 rounded-xl bg-gray-50 border border-gray-200 flex justify-between items-center">
+            <div>
+              <p class="text-xs text-gray-500 font-semibold uppercase">Platform Advantage</p>
+              <p id="activeLeverageDisplay" class="font-heading font-extrabold text-xl text-brandGreen">500x (0.20% Margin)</p>
+            </div>
           </div>
 
-          <!-- Quantity Input -->
-          <div>
-            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">5. Quantity (Units / Shares)</label>
-            <input type="number" id="quantityInput" value="100" min="1" step="1"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300 font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brandGreen" />
+          <!-- Slider 1: Capital Input -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label class="text-sm font-bold text-gray-700">Investment Capital (₹)</label>
+              <span id="capitalValDisplay" class="font-bold text-brandGreen">₹50,000</span>
+            </div>
+            <input type="range" id="investmentSlider" min="1000" max="1000000" step="1000" value="50000"
+                   class="w-full accent-brandGreen cursor-pointer" />
+            <div class="flex justify-between text-xs text-gray-400 font-medium">
+              <span>₹1,000</span>
+              <span>₹10,00,000</span>
+            </div>
           </div>
+
+          <!-- Slider 2: Asset Movement / Profit % -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label class="text-sm font-bold text-gray-700">Asset Price Movement (%)</label>
+              <span id="profitPctDisplay" class="font-bold text-brandGreen">5%</span>
+            </div>
+            <input type="range" id="profitSlider" min="1" max="100" step="1" value="5"
+                   class="w-full accent-brandGreen cursor-pointer" />
+            <div class="flex justify-between text-xs text-gray-400 font-medium">
+              <span>1%</span>
+              <span>100%</span>
+            </div>
+          </div>
+
         </div>
 
         <!-- Output Breakdown Column -->
-        <div class="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-200 space-y-6">
+        <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-200 space-y-6">
           
           <h3 class="font-heading font-bold text-xl text-gray-900 pb-3 border-b border-gray-100">
-            Calculation Summary & Comparison
+            Side-by-Side Comparison
           </h3>
 
-          <!-- Primary Metric Cards -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-              <p class="text-xs font-bold uppercase text-gray-500">Total Turnover</p>
-              <p id="calcTotalTurnover" class="font-heading font-extrabold text-base text-gray-900 mt-1">₹1,02,500</p>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-              <p class="text-xs font-bold uppercase text-gray-500">Gross P&L</p>
-              <p id="calcGrossProfit" class="font-heading font-extrabold text-base text-emerald-600 mt-1">₹2,500</p>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-              <p class="text-xs font-bold uppercase text-gray-500">Traditional Brokerage</p>
-              <p id="calcTotalBrokerage" class="font-heading font-extrabold text-base text-brandRed mt-1">₹30.75</p>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-              <p class="text-xs font-bold uppercase text-gray-500">Statutory Taxes</p>
-              <p id="calcTotalTaxes" class="font-heading font-extrabold text-base text-brandRed mt-1">₹118.50</p>
-            </div>
-          </div>
-
-          <!-- Detailed Side-by-Side Comparison -->
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm border-collapse">
               <thead>
                 <tr class="border-b border-gray-200 bg-gray-50 text-gray-600">
-                  <th class="p-3 font-bold">Cost Breakdown</th>
+                  <th class="p-3 font-bold">Metric</th>
                   <th class="p-3 font-bold text-brandRed">Traditional Broker</th>
                   <th class="p-3 font-bold text-brandGreen bg-emerald-50/60">TRADE246</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 font-medium">
                 <tr>
-                  <td class="p-3 text-gray-600">Turnover Controlled</td>
-                  <td id="tradExposureVal" class="p-3 text-gray-900">₹1,02,500</td>
-                  <td id="t246ExposureVal" class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹1,02,500</td>
+                  <td class="p-3 text-gray-600">Effective Exposure / Market Control</td>
+                  <td id="tradExposureVal" class="p-3 text-gray-900">₹2,50,000</td>
+                  <td id="t246ExposureVal" class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹2,50,00,000</td>
                 </tr>
                 <tr>
-                  <td class="p-3 text-gray-600">Gross Trade Return</td>
+                  <td class="p-3 text-gray-600">Gross Return (<span id="tableProfitPct">5%</span> Move)</td>
                   <td id="tradGrossProfitVal" class="p-3 text-gray-900">₹2,500</td>
-                  <td id="t246GrossProfitVal" class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹2,500</td>
+                  <td id="t246GrossProfitVal" class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹1,25,000</td>
                 </tr>
                 <tr>
                   <td class="p-3 text-gray-600">Brokerage Charges</td>
-                  <td class="p-3 text-brandRed font-bold">Standard Slabs</td>
+                  <td class="p-3 text-brandRed font-bold">₹20 - ₹200+</td>
                   <td class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹0.00 FREE</td>
                 </tr>
                 <tr>
-                  <td class="p-3 text-gray-600">Statutory Taxes (STT/CTT, Exchange, GST, Stamp)</td>
-                  <td class="p-3 text-brandRed font-bold">Applicable Taxes</td>
-                  <td class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹0.00 (0% Tax)</td>
+                  <td class="p-3 text-gray-600">Taxation (STT, GST, Stamp Duty)</td>
+                  <td class="p-3 text-brandRed font-bold">6% - 13% Tax</td>
+                  <td class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹0 (0% Tax)</td>
                 </tr>
-                <!-- Highlighted Final Take-Home Row -->
+                <tr>
+                  <td class="p-3 text-gray-600">Total Account Value After Trade</td>
+                  <td id="tradNetWorthVal" class="p-3 text-gray-900">₹52,200</td>
+                  <td id="t246NetWorthVal" class="p-3 text-brandGreen font-bold bg-emerald-50/60">₹1,75,000</td>
+                </tr>
+                <!-- Highlighted Final Profit Row -->
                 <tr class="bg-gradient-to-r from-emerald-50 via-emerald-100/70 to-emerald-50 border-t-2 border-brandGreen">
                   <td class="p-4 font-extrabold text-gray-900 text-base">Net Take-Home Profit</td>
-                  <td id="tradProfitVal" class="p-4 text-brandRed font-extrabold text-base">₹2,350.75</td>
-                  <td id="t246ProfitVal" class="p-4 text-emerald-800 font-black text-xl bg-emerald-200/60 rounded-r-lg shadow-inner">₹2,500.00</td>
+                  <td id="tradProfitVal" class="p-4 text-brandRed font-extrabold text-base">₹2,200</td>
+                  <td id="t246ProfitVal" class="p-4 text-emerald-800 font-black text-xl bg-emerald-200/60 rounded-r-lg shadow-inner">₹1,25,000</td>
                 </tr>
               </tbody>
             </table>
@@ -252,7 +268,7 @@
           <div class="p-6 rounded-2xl bg-brandGreen text-white shadow-xl space-y-2">
             <p class="text-xs font-bold text-emerald-300 uppercase tracking-widest">Platform Advantage</p>
             <div class="flex justify-between items-baseline">
-              <p id="dynamicAdvantageBanner" class="font-heading font-extrabold text-xl sm:text-2xl text-white">Save 100% on Brokerage & Taxes with TRADE246</p>
+              <p id="dynamicAdvantageBanner" class="font-heading font-extrabold text-2xl text-white">Net advantage with TRADE246 : 500x more exposure</p>
             </div>
           </div>
 
@@ -418,7 +434,7 @@
     </div>
   </section>
 
-  <!-- 4. NEGATIVE BALANCE PROTECTION SECTION -->
+  <!-- 4. REWORKED NEGATIVE BALANCE PROTECTION SECTION -->
   <section id="nbp" class="py-20 bg-white border-t border-gray-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
@@ -510,16 +526,10 @@
   <!-- Footer -->
   <footer class="bg-gray-950 text-gray-400 border-t border-gray-900 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-      
-      <!-- Footer Branding Logo -->
-      <a href="#" class="flex items-center">
-        <img src="logo.png" alt="TRADE246 Logo" class="h-8 w-auto object-contain" id="footerLogoImg" onerror="this.classList.add('hidden'); document.getElementById('footerLogoFallback').classList.remove('hidden');" />
-        
-        <div id="footerLogoFallback" class="hidden w-8 h-8 rounded-lg bg-brandGreen text-white flex items-center justify-center font-bold text-base">
-          T
-        </div>
-      </a>
-
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-brandGreen text-white flex items-center justify-center font-bold text-base">T</div>
+        <span class="font-heading font-bold text-xl text-white">TRADE246</span>
+      </div>
       <div class="text-xs text-gray-500">
         High Leverage Multi-Asset Trading Platform
       </div>
