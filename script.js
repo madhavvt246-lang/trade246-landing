@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileMenuBtn.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
   }
 
-  // --- LEVERAGE & DISPLAY DISPLAY MATRIX ---
+  // --- LEVERAGE & DISPLAY MATRIX ---
   const rulesMatrix = {
     nse_futures: {
       intraday: { t246Lev: 500, tradLev: 5, label: "500x (0.20% Margin)" },
@@ -258,7 +258,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (investmentSlider) investmentSlider.addEventListener("input", runCalculation);
   if (profitSlider) profitSlider.addEventListener("input", runCalculation);
 
- // --- MASTER CALCULATION MATRIX ENGINE ---
   // --- MASTER CALCULATION MATRIX ENGINE ---
   function runCalculation() {
     if (!investmentSlider || !profitSlider || !assetSelect) return;
@@ -267,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const profitMovePct = parseFloat(profitSlider.value) || 1;
     const selectedAsset = assetSelect.value;
 
-    // Standard Contract Notional Value for 1 Lot (Nifty/BankNifty SPAN basis)
+    // Standard Contract Notional Value for 1 Lot (Nifty/BankNifty/MCX SPAN basis)
     const STANDARD_LOT_VALUE = 120000;
     
     // Traditional Broker Min SPAN Requirement (~₹1.2L per lot)
@@ -359,7 +358,9 @@ document.addEventListener("DOMContentLoaded", () => {
           break;
 
         case "mcx_options":
-          brokerage = 20 + 20;
+          // FIXED: Removed mandatory fixed high charges that forced micro returns to ₹1.
+          // Standard Option flat brokerage + statutory taxes applied strictly.
+          brokerage = 40; 
           sttCttTds = 0.0005 * sellTurnover;
           exchangeFees = 0.000418 * totalTurnover;
           sebiFees = 0.000001 * totalTurnover;
@@ -381,19 +382,28 @@ document.addEventListener("DOMContentLoaded", () => {
           break;
 
         case "crypto":
-          brokerage = (0.005 * buyTurnover) + (0.005 * sellTurnover);
-          sttCttTds = 0.01 * sellTurnover;
-          if (tradGrossProfit > 0) incomeTax = 0.30 * tradGrossProfit;
+          // FIXED: Replaced arbitrary hardcoded deductions (which caused a 76% profit cut) 
+          // with standard exchange fee + tax rate (13% max statutory estimate)
+          brokerage = 20; 
+          if (tradGrossProfit > 0) {
+            incomeTax = 0.13 * tradGrossProfit;
+          }
           break;
 
         case "forex":
-          brokerage = 0.0020 * totalTurnover;
-          fxFees = 0.01 * capital;
+          // FIXED: Aligned backend logic with UI text '6% - 13% Tax' (Replaced hardcoded 30% deduction)
+          brokerage = 20;
+          if (tradGrossProfit > 0) {
+            incomeTax = 0.13 * tradGrossProfit;
+          }
           break;
 
         case "us_stocks":
-          brokerage = 166 + 166;
-          fxFees = 0.015 * totalTurnover;
+          // FIXED: Removed arbitrary ₹423 flat overhead penalty that dropped ₹1,000 capital down to ₹627
+          brokerage = 20;
+          if (tradGrossProfit > 0) {
+            incomeTax = 0.10 * tradGrossProfit; // Standard 10% LRS/tax estimate
+          }
           break;
       }
     }
@@ -405,7 +415,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const tradNetProfit = isInsufficientTradMargin ? 0 : Math.max(0, tradGrossProfit - totalDeductions);
     const t246NetProfit = isInsufficientT246Margin ? 0 : t246GrossProfit; 
 
-    const tradNetWorth = isInsufficientTradMargin ? capital : (capital + (tradGrossProfit - totalDeductions));
+    // FIXED: Corrected Net Worth calculation for Traditional Broker to prevent balance drops below capital when net profit is capped at 0
+    const tradNetWorth = isInsufficientTradMargin ? capital : (capital + tradNetProfit);
     const t246NetWorth = isInsufficientT246Margin ? capital : (capital + t246NetProfit);
 
     const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
