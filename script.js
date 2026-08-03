@@ -131,6 +131,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const t246NetWorthVal = document.getElementById("t246NetWorthVal");
   const dynamicAdvantageBanner = document.getElementById("dynamicAdvantageBanner");
 
+  // Dynamic UI Label for Traditional Broker Taxation Table Row
+  const tradTaxLabel = document.getElementById("tradTaxLabel");
+
   // Web App Endpoint
   const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzM0HhybnJ12-PR3hOWIc48kHiASv2Ry58XmG4wXFnNOqZZ8u3LazP8TYKxJDLQ5ZmC/exec";
 
@@ -325,6 +328,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let incomeTax = 0;
     let fxFees = 0;
 
+    // Dynamic UI Text Label Update
+    let currentTaxLabel = "STT, GST, Stamp Duty";
+
     if (!isInsufficientTradMargin && capital > 0) {
       switch (selectedAsset) {
         case "nse_futures":
@@ -333,6 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
           exchangeFees = 0.0000188 * totalTurnover;
           sebiFees = 0.000001 * totalTurnover;
           stampDuty = 0.00002 * buyTurnover;
+          currentTaxLabel = "STT, GST, Stamp Duty";
           break;
 
         case "nse_options":
@@ -341,6 +348,7 @@ document.addEventListener("DOMContentLoaded", () => {
           exchangeFees = 0.000495 * totalTurnover;
           sebiFees = 0.000001 * totalTurnover;
           stampDuty = 0.00003 * buyTurnover;
+          currentTaxLabel = "STT, GST, Stamp Duty";
           break;
 
         case "mcx_futures":
@@ -349,6 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
           exchangeFees = 0.000021 * totalTurnover;
           sebiFees = 0.000001 * totalTurnover;
           stampDuty = 0.00002 * buyTurnover;
+          currentTaxLabel = "CTT, GST, Stamp Duty";
           break;
 
         case "mcx_options":
@@ -357,6 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
           exchangeFees = 0.000418 * totalTurnover;
           sebiFees = 0.000001 * totalTurnover;
           stampDuty = 0.00003 * buyTurnover;
+          currentTaxLabel = "CTT, GST, Stamp Duty";
           break;
 
         case "nse_equity":
@@ -364,39 +374,58 @@ document.addEventListener("DOMContentLoaded", () => {
             brokerage = 0;
             sttCttTds = (0.001 * buyTurnover) + (0.001 * sellTurnover);
             stampDuty = 0.00015 * buyTurnover;
+            currentTaxLabel = "0.1% STT + Stamp Duty";
           } else {
             brokerage = Math.min(0.0003 * buyTurnover, 20) + Math.min(0.0003 * sellTurnover, 20);
             sttCttTds = 0.00025 * sellTurnover;
             stampDuty = 0.00003 * buyTurnover;
+            // 20% Short-Term Capital Gains Tax (Section 111A)
+            if (tradGrossProfit > 0) {
+              incomeTax = 0.20 * tradGrossProfit;
+            }
+            currentTaxLabel = "20% STCG + STT, GST";
           }
           exchangeFees = 0.0000322 * totalTurnover;
           sebiFees = 0.000001 * totalTurnover;
           break;
 
         case "crypto":
-          // Scaled Fee: 0.20% turnover or flat ₹20 minimum
+          // Brokerage: ~0.20% turnover or flat ₹20 min
           brokerage = Math.max(20, 0.002 * totalTurnover); 
+          // Flat 30% Tax under Section 115BBH
           if (tradGrossProfit > 0) {
-            incomeTax = 0.13 * tradGrossProfit;
+            incomeTax = 0.30 * tradGrossProfit;
           }
+          currentTaxLabel = "30% Tax (Sec 115BBH)";
           break;
 
         case "forex":
-          // Scaled Fee: 0.15% turnover or flat ₹20 minimum
+          // Brokerage: ~0.15% turnover or flat ₹20 min
           brokerage = Math.max(20, 0.0015 * totalTurnover);
+          // Statutory Stamp Duty (0.0001% buy side)
+          stampDuty = 0.000001 * buyTurnover;
+          // Income taxed as business income (assumed ~15% tax bracket)
           if (tradGrossProfit > 0) {
-            incomeTax = 0.13 * tradGrossProfit;
+            incomeTax = 0.15 * tradGrossProfit;
           }
+          currentTaxLabel = "15% Income Tax + Stamp Duty";
           break;
 
         case "us_stocks":
-          // Scaled Fee: 0.25% turnover or flat ₹20 minimum
-          brokerage = Math.max(20, 0.0025 * totalTurnover);
+          // Brokerage & FX Transfer Cost (~0.75% combined)
+          brokerage = Math.max(50, 0.0075 * totalTurnover);
+          // Standard Indian Tax Slab assumption (~15%)
           if (tradGrossProfit > 0) {
-            incomeTax = 0.10 * tradGrossProfit;
+            incomeTax = 0.15 * tradGrossProfit;
           }
+          currentTaxLabel = "15% Tax + FX Conversion";
           break;
       }
+    }
+
+    // Update UI Table Tax Label
+    if (tradTaxLabel) {
+      tradTaxLabel.innerText = currentTaxLabel;
     }
 
     const gst = 0.18 * (brokerage + exchangeFees + sebiFees);
