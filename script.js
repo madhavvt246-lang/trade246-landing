@@ -260,148 +260,143 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- MASTER CALCULATION MATRIX ENGINE ---
   function runCalculation() {
-    if (!investmentSlider || !profitSlider || !assetSelect) return;
+  if (!investmentSlider || !profitSlider || !assetSelect) return;
 
-    const capital = parseFloat(investmentSlider.value) || 1000;
-    const profitMovePct = parseFloat(profitSlider.value) || 1;
-    const selectedAsset = assetSelect.value;
+  const capital = parseFloat(investmentSlider.value) || 1000;
+  const profitMovePct = parseFloat(profitSlider.value) || 1;
+  const selectedAsset = assetSelect.value;
 
-    let rule;
-    if (selectedAsset === "nse_options" || selectedAsset === "mcx_options") {
-      rule = rulesMatrix[selectedAsset][currentOptionType][currentHoldingType];
-    } else {
-      rule = rulesMatrix[selectedAsset][currentHoldingType];
-    }
-
-    const t246Lev = rule.t246Lev;
-    const tradLev = rule.tradLev;
-
-    // Display Text Updates
-    if (activeLeverageDisplay) activeLeverageDisplay.innerText = rule.label;
-    if (capitalValDisplay) capitalValDisplay.innerText = `₹${capital.toLocaleString("en-IN")}`;
-    if (profitPctDisplay) profitPctDisplay.innerText = `${profitMovePct}%`;
-    if (tableProfitPct) tableProfitPct.innerText = `${profitMovePct}%`;
-
-    // 1. Exposure & Turnover Metrics
-    const tradExposure = capital * tradLev;
-    const t246Exposure = capital * t246Lev;
-
-    const buyTurnover = tradExposure;
-    const sellTurnover = buyTurnover * (1 + (profitMovePct / 100));
-    const totalTurnover = buyTurnover + sellTurnover;
-
-    const tradGrossProfit = sellTurnover - buyTurnover;
-    const t246GrossProfit = (t246Exposure * (1 + (profitMovePct / 100))) - t246Exposure;
-
-    // 2. Strict Mathematical Rules Matrix Computation
-    let brokerage = 0;
-    let sttCttTds = 0;
-    let exchangeFees = 0;
-    let sebiFees = 0;
-    let stampDuty = 0;
-    let incomeTax = 0;
-    let fxFees = 0;
-
-    switch (selectedAsset) {
-      case "nse_futures":
-        brokerage = Math.min(0.0003 * buyTurnover, 20) + Math.min(0.0003 * sellTurnover, 20);
-        sttCttTds = 0.0002 * sellTurnover;
-        exchangeFees = 0.0000188 * totalTurnover;
-        sebiFees = 0.000001 * totalTurnover;
-        stampDuty = 0.00002 * buyTurnover;
-        break;
-
-      case "nse_options":
-        brokerage = 20 + 20; // Flat ₹20 buy + ₹20 sell
-        sttCttTds = 0.001 * sellTurnover;
-        exchangeFees = 0.000495 * totalTurnover;
-        sebiFees = 0.000001 * totalTurnover;
-        stampDuty = 0.00003 * buyTurnover;
-        break;
-
-      case "mcx_futures":
-        brokerage = Math.min(0.0003 * buyTurnover, 20) + Math.min(0.0003 * sellTurnover, 20);
-        sttCttTds = 0.0001 * sellTurnover; // CTT
-        exchangeFees = 0.000021 * totalTurnover;
-        sebiFees = 0.000001 * totalTurnover;
-        stampDuty = 0.00002 * buyTurnover;
-        break;
-
-      case "mcx_options":
-        brokerage = 20 + 20; // Flat ₹40 fixed
-        sttCttTds = 0.0005 * sellTurnover; // CTT
-        exchangeFees = 0.000418 * totalTurnover;
-        sebiFees = 0.000001 * totalTurnover;
-        stampDuty = 0.00003 * buyTurnover;
-        break;
-
-      case "nse_equity":
-        if (currentHoldingType === "holding") { // Delivery
-          brokerage = 0;
-          sttCttTds = (0.001 * buyTurnover) + (0.001 * sellTurnover);
-          stampDuty = 0.00015 * buyTurnover;
-        } else { // Intraday
-          brokerage = Math.min(0.0003 * buyTurnover, 20) + Math.min(0.0003 * sellTurnover, 20);
-          sttCttTds = 0.00025 * sellTurnover;
-          stampDuty = 0.00003 * buyTurnover;
-        }
-        exchangeFees = 0.0000322 * totalTurnover;
-        sebiFees = 0.000001 * totalTurnover;
-        break;
-
-      case "crypto":
-        brokerage = (0.005 * buyTurnover) + (0.005 * sellTurnover); // Flat 0.5% per leg
-        sttCttTds = 0.01 * sellTurnover; // TDS 1% Sec 194S
-        if (tradGrossProfit > 0) {
-          incomeTax = 0.30 * tradGrossProfit; // Flat 30% tax on net capital gains
-        }
-        break;
-
-      case "forex":
-        brokerage = 0.0020 * totalTurnover; // Spread Markups (0.20%)
-        fxFees = 0.01 * capital; // 1% Currency conversion fee on capital
-        break;
-
-      case "us_stocks":
-        brokerage = (2 * 83) + (2 * 83); // Flat $2 per order converted to INR (~₹83/$)
-        fxFees = 0.015 * totalTurnover; // 1.5% FX conversion fee
-        break;
-    }
-
-    // GST Calculation: 18% of (Brokerage + Exchange Fees + SEBI Fees)
-    const gst = 0.18 * (brokerage + exchangeFees + sebiFees);
-
-    // Sum Mapped Outputs
-    const totalBrokerageCharges = brokerage;
-    const totalTaxation = sttCttTds + exchangeFees + sebiFees + stampDuty + gst + incomeTax + fxFees;
-    
-    // Net Take-Home Calculations
-    const tradNetProfit = Math.max(0, tradGrossProfit - totalBrokerageCharges - totalTaxation);
-    const t246NetProfit = t246GrossProfit; // ₹0 Brokerage & Taxes on TRADE246
-
-    const tradNetWorth = capital + tradNetProfit;
-    const t246NetWorth = capital + t246NetProfit;
-
-    // Currency Formatter
-    const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
-
-    // Update DOM Mapped Output Fields
-    if (tradExposureVal) tradExposureVal.innerText = formatINR(tradExposure);
-    if (t246ExposureVal) t246ExposureVal.innerText = formatINR(t246Exposure);
-
-    if (tradGrossProfitVal) tradGrossProfitVal.innerText = formatINR(tradGrossProfit);
-    if (t246GrossProfitVal) t246GrossProfitVal.innerText = formatINR(t246GrossProfit);
-
-    if (tradProfitVal) tradProfitVal.innerText = formatINR(tradNetProfit);
-    if (t246ProfitVal) t246ProfitVal.innerText = formatINR(t246NetProfit);
-
-    if (tradNetWorthVal) tradNetWorthVal.innerText = formatINR(tradNetWorth);
-    if (t246NetWorthVal) t246NetWorthVal.innerText = formatINR(t246NetWorth);
-
-    if (dynamicAdvantageBanner) {
-      dynamicAdvantageBanner.innerText = `Net advantage with TRADE246 : ${t246Lev}x more exposure`;
-    }
+  let rule;
+  if (selectedAsset === "nse_options" || selectedAsset === "mcx_options") {
+    rule = rulesMatrix[selectedAsset][currentOptionType][currentHoldingType];
+  } else {
+    rule = rulesMatrix[selectedAsset][currentHoldingType];
   }
+
+  const t246Lev = rule.t246Lev;
+  const tradLev = rule.tradLev;
+
+  // Display Updates
+  if (activeLeverageDisplay) activeLeverageDisplay.innerText = rule.label;
+  if (capitalValDisplay) capitalValDisplay.innerText = `₹${capital.toLocaleString("en-IN")}`;
+  if (profitPctDisplay) profitPctDisplay.innerText = `${profitMovePct}%`;
+  if (tableProfitPct) tableProfitPct.innerText = `${profitMovePct}%`;
+
+  // 1. Exposure Metrics
+  const tradExposure = capital * tradLev;
+  const t246Exposure = capital * t246Lev;
+
+  const buyTurnover = tradExposure;
+  const sellTurnover = buyTurnover * (1 + (profitMovePct / 100));
+  const totalTurnover = buyTurnover + sellTurnover;
+
+  const tradGrossProfit = sellTurnover - buyTurnover;
+  const t246GrossProfit = (t246Exposure * (1 + (profitMovePct / 100))) - t246Exposure;
+
+  // 2. Strict Friction Computation (Traditional Broker)
+  let brokerage = 0;
+  let sttCttTds = 0;
+  let exchangeFees = 0;
+  let sebiFees = 0;
+  let stampDuty = 0;
+  let incomeTax = 0;
+  let fxFees = 0;
+
+  switch (selectedAsset) {
+    case "nse_futures":
+      brokerage = Math.min(0.0003 * buyTurnover, 20) + Math.min(0.0003 * sellTurnover, 20);
+      sttCttTds = 0.0002 * sellTurnover;
+      exchangeFees = 0.0000188 * totalTurnover;
+      sebiFees = 0.000001 * totalTurnover;
+      stampDuty = 0.00002 * buyTurnover;
+      break;
+
+    case "nse_options":
+      brokerage = 20 + 20; // Flat ₹20 Buy + ₹20 Sell
+      sttCttTds = 0.001 * sellTurnover; // 0.1% STT on Premium Sell
+      exchangeFees = 0.000495 * totalTurnover;
+      sebiFees = 0.000001 * totalTurnover;
+      stampDuty = 0.00003 * buyTurnover;
+      break;
+
+    case "mcx_futures":
+      brokerage = Math.min(0.0003 * buyTurnover, 20) + Math.min(0.0003 * sellTurnover, 20);
+      sttCttTds = 0.0001 * sellTurnover;
+      exchangeFees = 0.000021 * totalTurnover;
+      sebiFees = 0.000001 * totalTurnover;
+      stampDuty = 0.00002 * buyTurnover;
+      break;
+
+    case "mcx_options":
+      brokerage = 20 + 20;
+      sttCttTds = 0.0005 * sellTurnover;
+      exchangeFees = 0.000418 * totalTurnover;
+      sebiFees = 0.000001 * totalTurnover;
+      stampDuty = 0.00003 * buyTurnover;
+      break;
+
+    case "nse_equity":
+      if (currentHoldingType === "holding") {
+        brokerage = 0;
+        sttCttTds = (0.001 * buyTurnover) + (0.001 * sellTurnover);
+        stampDuty = 0.00015 * buyTurnover;
+      } else {
+        brokerage = Math.min(0.0003 * buyTurnover, 20) + Math.min(0.0003 * sellTurnover, 20);
+        sttCttTds = 0.00025 * sellTurnover;
+        stampDuty = 0.00003 * buyTurnover;
+      }
+      exchangeFees = 0.0000322 * totalTurnover;
+      sebiFees = 0.000001 * totalTurnover;
+      break;
+
+    case "crypto":
+      brokerage = (0.005 * buyTurnover) + (0.005 * sellTurnover);
+      sttCttTds = 0.01 * sellTurnover;
+      if (tradGrossProfit > 0) incomeTax = 0.30 * tradGrossProfit;
+      break;
+
+    case "forex":
+      brokerage = 0.0020 * totalTurnover;
+      fxFees = 0.01 * capital;
+      break;
+
+    case "us_stocks":
+      brokerage = 166 + 166; // ~$2 buy + $2 sell in INR
+      fxFees = 0.015 * totalTurnover;
+      break;
+  }
+
+  // GST 18% on (Brokerage + Exchange Fees + SEBI Fees)
+  const gst = 0.18 * (brokerage + exchangeFees + sebiFees);
+
+  const totalDeductions = brokerage + sttCttTds + exchangeFees + sebiFees + stampDuty + gst + incomeTax + fxFees;
+
+  // Net Take-Home Calculations (Floor at 0 if fees exceed gross return)
+  const tradNetProfit = Math.max(0, tradGrossProfit - totalDeductions);
+  const t246NetProfit = t246GrossProfit; 
+
+  const tradNetWorth = capital + (tradGrossProfit - totalDeductions);
+  const t246NetWorth = capital + t246NetProfit;
+
+  const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
+
+  // DOM Updates
+  if (tradExposureVal) tradExposureVal.innerText = formatINR(tradExposure);
+  if (t246ExposureVal) t246ExposureVal.innerText = formatINR(t246Exposure);
+
+  if (tradGrossProfitVal) tradGrossProfitVal.innerText = formatINR(tradGrossProfit);
+  if (t246GrossProfitVal) t246GrossProfitVal.innerText = formatINR(t246GrossProfit);
+
+  if (tradProfitVal) tradProfitVal.innerText = formatINR(tradNetProfit);
+  if (t246ProfitVal) t246ProfitVal.innerText = formatINR(t246NetProfit);
+
+  if (tradNetWorthVal) tradNetWorthVal.innerText = formatINR(tradNetWorth);
+  if (t246NetWorthVal) t246NetWorthVal.innerText = formatINR(t246NetWorth);
+
+  if (dynamicAdvantageBanner) {
+    dynamicAdvantageBanner.innerText = `Net advantage with TRADE246 : ${t246Lev}x more exposure`;
+  }
+}
 });
 
 // Ensure top position after full window load
